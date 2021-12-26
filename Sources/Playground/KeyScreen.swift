@@ -46,54 +46,56 @@ enum KeyScreen: Node {
 
 extension Flow where N == KeyScreen {
     static var main: NavigationGraph<N> = {
-        let flow: Flow<N> = .init()
-            // from `.splash` (initial loading screen) to any of the
-            // `.gatekeeper`, `.onboarding`, `.dashboard` screens,
-            // depending on the app state (user logged in, onboarded etc)
-            .add(segue: KeyScreen.splash => [KeyScreen.gatekeeper, KeyScreen.onboarding, KeyScreen.dashboard])
-            // from `.gatekeeper` (the authentication-related screen),
-            // to any of the `.login`, `.register` or `.forgotPass`, depending
-            // on user navigation. We'll later on set the default screen to `.login`
-            // using a redirect segue trait
-            .add(segue: KeyScreen.gatekeeper => [KeyScreen.login, KeyScreen.register, KeyScreen.forgotPass])
-            // like in many authentication screens, we can freely navigate between
-            // `.login`, `.register` and `.forgotPass` (from any to any)
-            .add(segue: KeyScreen.login <=> KeyScreen.register <=> KeyScreen.forgotPass <=> KeyScreen.login)
-            // we can freely navigate between the onboarding screens, however, we can't return to the root `.onboarding` parent screen
-            .add(segue: KeyScreen.onboarding => KeyScreen.onboardingUsername <=> KeyScreen.onboardingTutorial <=> KeyScreen.onboardingPrivacyPolicy => KeyScreen.dashboard)
-            // when logging out, we move from `.dashboard` back to the `.gatekeeper`
-            .add(segue: KeyScreen.dashboard => KeyScreen.gatekeeper)
-            // from `.dashboard` we can access any of it's tabs:
-            // `.library`, `.news`, `.settings`
-            .add(segue: KeyScreen.dashboard => [KeyScreen.library, KeyScreen.news, KeyScreen.settings])
-            // but also, since this is a tabbed navigation,
-            // we can reach any of the screens from the others
-            .add(segue: KeyScreen.library <=> KeyScreen.news <=> KeyScreen.settings <=> KeyScreen.library)
-            // we can reach the compose modal from the dashboard
-            .add(segue: KeyScreen.dashboard <=> KeyScreen.compose)
-            // settings is a list, you can navigate from the
-            // root to any of the items and back
-            .add(segue: KeyScreen.settings <=> [KeyScreen.updateAvatar, KeyScreen.updateBio, KeyScreen.updateUsername])
-            // some segues require additional fine tuning;
-            // although segue traits are mutable and can be added at any
-            // time, however, we start with some to define the
-            // initial
-            // we initially disable the navigation to the dashboard and onboarding;
-            // these are available only when the user is logged in
-//            .addTrait(.redirect(to: Path(.gatekeeper)), segue: Segue(.splash, to: .onboarding))
-//            .addTrait(.redirect(to: Path(.gatekeeper)), segue: Segue(.splash, to: .dashboard))
-            // the compose screen is a modal
-//            .addTrait(.modal, segue: Segue(.dashboard, to: .compose))
-            // the onboarding screens can be navigating in a relative way using `.next()` and `.prev()` commands
-//            .addTrait(.next, segue: Segue(.onboardingUsername, to: .onboardingTutorial))
-//            .addTrait(.next, segue: Segue(.onboardingTutorial, to: .onboardingPrivacyPolicy))
-//            .addTrait(.next, segue: Segue(.onboardingPrivacyPolicy, to: .dashboard))
-//            .addTrait(.prev, segue: Segue(.onboardingPrivacyPolicy, to: .onboardingTutorial))
-//            .addTrait(.prev, segue: Segue(.onboardingTutorial, to: .onboardingUsername))
-            // the root onboarding screen forwards to the first onboarding screen (username)
-//            .addTrait(.redirect(to: Path(.onboardingUsername)), segue: Segue(.))
-            
+        var flow: Flow<N> = .init()
+        // from `.splash` (initial loading screen) to any of the
+        // `.gatekeeper`, `.onboarding`, `.dashboard` screens,
+        // depending on the app state (user logged in, onboarded etc)
+        flow.add(segue: KeyScreen.splash => [KeyScreen.gatekeeper, KeyScreen.onboarding, KeyScreen.dashboard])
+        // from `.gatekeeper` (the authentication-related screen),
+        // to any of the `.login`, `.register` or `.forgotPass`, depending
+        // on user navigation. We'll later on set the default screen to `.login`
+        // using a redirect segue trait
+        flow.add(segue: KeyScreen.gatekeeper => [KeyScreen.login, KeyScreen.register, KeyScreen.forgotPass])
+        // like in many authentication screens, we can freely navigate between
+        // `.login`, `.register` and `.forgotPass` (from any to any)
+        flow.add(segue: KeyScreen.login <=> KeyScreen.register <=> KeyScreen.forgotPass <=> KeyScreen.login)
+        // we can freely navigate between the onboarding screens, however, we can't return to the root `.onboarding` parent screen
+        flow.add(segue: KeyScreen.onboarding => KeyScreen.onboardingUsername <=> KeyScreen.onboardingTutorial <=> KeyScreen.onboardingPrivacyPolicy => KeyScreen.dashboard)
+        // when logging out, we move from `.dashboard` back to the `.gatekeeper`
+        flow.add(segue: KeyScreen.dashboard => KeyScreen.gatekeeper)
+        // from `.dashboard` we can access any of it's tabs:
+        // `.library`, `.news`, `.settings`
+        flow.add(segue: KeyScreen.dashboard => [KeyScreen.library, KeyScreen.news, KeyScreen.settings])
+        // but also, since this is a tabbed navigation,
+        // we can reach any of the screens from the others
+        flow.add(segue: KeyScreen.library <=> KeyScreen.news <=> KeyScreen.settings <=> KeyScreen.library)
+        // we can reach the compose modal from the dashboard
+        flow.add(segue: KeyScreen.dashboard <=> KeyScreen.compose)
+        // settings is a list, you can navigate from the
+        // root to any of the items and back
+        flow.add(segue: KeyScreen.settings <=> [KeyScreen.updateAvatar, KeyScreen.updateBio, KeyScreen.updateUsername])
 
-        return NavigationGraph(flow: flow)
+        let graph = NavigationGraph(flow: flow)
+        // some segues require additional fine tuning;
+        // although segue traits are mutable and can be added at any
+        // time, however, we start with some to define the
+        // initial
+        // we initially disable the navigation to the dashboard and onboarding;
+        // these are available only when the user is logged in
+        graph.add(trait: .redirect(to: graph.path(to: .gatekeeper)),
+                  path: graph.egressPath(from: .splash).trim(at: .gatekeeper))
+        // the compose screen is a modal
+        graph.add(trait: .modal,
+                  path: graph.path(from: .dashboard => .compose))
+        // the onboarding screens can be navigating in a relative way using `.next()` and `.prev()` commands
+        graph.add(trait: .next,
+                  path: graph.path(from: .onboardingUsername => .onboardingTutorial => .onboardingPrivacyPolicy => .dashboard))
+        graph.add(trait: .prev,
+                  path: graph.path(from: .onboardingPrivacyPolicy => .onboardingTutorial => .onboardingUsername))
+        // the root onboarding screen forwards to the first onboarding screen (username)
+        graph.add(trait: .redirect(to: graph.path(to: .onboardingUsername)),
+                  path: graph.egressPath(from: .onboarding))
+        
+        return graph
     }()
 }

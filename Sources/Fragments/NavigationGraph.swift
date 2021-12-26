@@ -23,6 +23,17 @@ precedencegroup GraphConnectorPrecedence {
 infix operator =>: GraphConnectorPrecedence
 infix operator <=>: GraphConnectorPrecedence
 
+public struct Path<N: Node>: Hashable {
+    let nodes: [N]
+    public func trim(at: N) -> Path<N> {
+        .init(nodes: [])
+    }
+    
+    public func trim(at: [N]) -> Path<N> {
+        .init(nodes: [])
+    }
+}
+
 public extension Node {
     static func => (lhs: Self, rhs: Self) -> OneToOneSegues<Self> {
         return OneToOneSegues(segues: [Segue(lhs, to: rhs)])
@@ -186,20 +197,22 @@ public struct Segue<N: Node> {
 }
 
 /// Segue traits define the navigation behaviour between nodes
-public enum SegueTrait<N: Node>: Hashable {
+public enum PathTrait<N: Node>: Hashable {
     /// When navigating using next/prev commands, it points to the next node
     case next
     /// When navigating using next/prev commands, it points to the previous node
     case prev
     /// Redirects to another path which has to be reachable from the current navigation graph state
-    case redirect(to: N)
-    /// Disables the segue
+    case redirect(to: Path<N>)
+    /// Disables the path
     case disable
-    /// Marks the segue as inclusive. Normal nodes are exclusive relative to their origin node.
+    /// Marks the path as inclusive. Normal nodes are exclusive relative to their origin node.
     /// In other words, when navigating to a node, all its siblings become inactive, while itself becomes active.
-    /// If a segue is marked `.inclusive`, this behaviour is disabled and multiple nodes can be active from the same parent node.
+    /// If a path is marked `.inclusive`, this behaviour is disabled and multiple nodes can be active from the same parent node.
     case inclusive
-    /// Similar to `.inclusive`. In addition, the closest active `.modal` node becomes inactive when calling navigation graph's `dismiss()` no matter the active graph layout.
+    /// The closest active `.root` node becomes inactive when calling navigation graph's `dismiss()` no matter the active graph layout.
+    case root
+    /// `.inclusive` and `.root`
     case modal
 }
 
@@ -218,16 +231,46 @@ public struct Flow<N: Node> {
     public mutating func add(segue: OneToManySegues<N>) {}
 
     public mutating func add(segue: ManyToOneSegues<N>) {}
-
-    public mutating func add(trait: SegueTrait<N>, segue: Segue<N>) {}
-
-    public mutating func add(trait: SegueTrait<N>, segue: OneToOneSegues<N>) {}
-
-    public mutating func add(trait: SegueTrait<N>, segue: OneToManySegues<N>) {}
-
-    public mutating func add(trait: SegueTrait<N>, segue: ManyToOneSegues<N>) {}
 }
 
 public class NavigationGraph<N: Node>: ObservableObject {
     public init(flow: Flow<N>) {}
+    
+    public func path(to: N) -> Path<N> {
+        .init(nodes: [])
+    }
+    
+    public func path(from: Segue<N>) -> Path<N> {
+        .init(nodes: [])
+    }
+    
+    public func path(from: OneToOneSegues<N>) -> Path<N> {
+        .init(nodes: [])
+    }
+    
+    public func path(from: OneToManySegues<N>) -> Path<N> {
+        .init(nodes: [])
+    }
+    
+    public func path(from: ManyToOneSegues<N>) -> Path<N> {
+        .init(nodes: [])
+    }
+    
+    public func ingressPath(to: N) -> Path<N> {
+        .init(nodes: [])
+    }
+    
+    public func egressPath(from: N) -> Path<N> {
+        .init(nodes: [])
+    }
+
+    public func add(trait: PathTrait<N>, path: Path<N>) {}
+    
+    public func navigate(to: N) {}
+    
+    public func next() {}
+    
+    public func prev() {}
+    
+    public func dismiss() {}
 }
