@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 /// A node is the atomic unit in a navigation graph. It usually represents a screen (or a part of it) in your app
 public protocol Node: Hashable {}
@@ -28,7 +29,7 @@ public struct Path<N: Node>: Hashable {
     public func trim(at: N) -> Path<N> {
         .init(nodes: [])
     }
-    
+
     public func trim(at: [N]) -> Path<N> {
         .init(nodes: [])
     }
@@ -235,42 +236,50 @@ public struct Flow<N: Node> {
 
 public class NavigationGraph<N: Node>: ObservableObject {
     public init(flow: Flow<N>) {}
-    
+
     public func path(to: N) -> Path<N> {
         .init(nodes: [])
     }
-    
+
     public func path(from: Segue<N>) -> Path<N> {
         .init(nodes: [])
     }
-    
+
     public func path(from: OneToOneSegues<N>) -> Path<N> {
         .init(nodes: [])
     }
-    
+
     public func path(from: OneToManySegues<N>) -> Path<N> {
         .init(nodes: [])
     }
-    
+
     public func path(from: ManyToOneSegues<N>) -> Path<N> {
         .init(nodes: [])
     }
-    
+
     public func ingressPath(to: N) -> Path<N> {
         .init(nodes: [])
     }
-    
+
     public func egressPath(from: N) -> Path<N> {
         .init(nodes: [])
     }
 
     public func add(trait: PathTrait<N>, path: Path<N>) {}
-    
-    public func navigate(to: N) {}
-    
+
+    public func present(node: N) {}
+
     public func next() {}
-    
+
     public func prev() {}
-    
+
     public func dismiss() {}
+
+    public func isPresented(_ node: N) -> Bool {
+        return true
+    }
+
+    public func isPresented(_ node: N) -> Binding<Bool> {
+        return .constant(true)
+    }
 }

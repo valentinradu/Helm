@@ -7,6 +7,7 @@
 
 import Foundation
 import Fragments
+import SwiftUI
 
 enum KeyScreen: Node {
     // visible while the app starts
@@ -34,6 +35,7 @@ enum KeyScreen: Node {
     case library
     case news
     case settings
+    case article
 
     // start writing a new article: a modal in the dashboard
     case compose
@@ -44,7 +46,7 @@ enum KeyScreen: Node {
     case updateUsername
 }
 
-extension Flow where N == KeyScreen {
+extension NavigationGraph where N == KeyScreen {
     static var main: NavigationGraph<N> = {
         var flow: Flow<N> = .init()
         // from `.splash` (initial loading screen) to any of the
@@ -69,6 +71,8 @@ extension Flow where N == KeyScreen {
         // but also, since this is a tabbed navigation,
         // we can reach any of the screens from the others
         flow.add(segue: KeyScreen.library <=> KeyScreen.news <=> KeyScreen.settings <=> KeyScreen.library)
+        // also, you can navigate to the article details and back
+        flow.add(segue: KeyScreen.library <=> KeyScreen.article)
         // we can reach the compose modal from the dashboard
         flow.add(segue: KeyScreen.dashboard <=> KeyScreen.compose)
         // settings is a list, you can navigate from the
@@ -95,7 +99,23 @@ extension Flow where N == KeyScreen {
         // the root onboarding screen forwards to the first onboarding screen (username)
         graph.add(trait: .redirect(to: graph.path(to: .onboardingUsername)),
                   path: graph.egressPath(from: .onboarding))
-        
+
         return graph
     }()
+}
+
+struct Fragment<V: View>: View {
+    @EnvironmentObject var nav: NavigationGraph<KeyScreen>
+    private let screen: KeyScreen
+    private let builder: () -> V
+    init(_ screen: KeyScreen, @ViewBuilder builder: @escaping () -> V) {
+        self.screen = screen
+        self.builder = builder
+    }
+
+    var body: some View {
+        if nav.isPresented(screen) {
+            builder()
+        }
+    }
 }
