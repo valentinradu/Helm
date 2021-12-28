@@ -192,8 +192,10 @@ public struct Segue<N: Node>: Hashable {
 /// Each segue can have multiple rules, editable at any time in the app's lifecycle.
 public enum SegueTrait<N: Node>: Hashable {
     /// Used to determine the next node when calling the relative `.next()` command.
+    /// Only one segue can have the `.next` trait between siblings.
     case next
     /// Used to determine the prev node when calling the relative `.prev()` command.
+    /// /// Only one segue can have the `.prev` trait between siblings.
     case prev
     /// Forwards the navigation to another flow.
     /// The new flow has to be reachable. In other words, at least one node has to be at a segue's distance from the currently presented ones.
@@ -209,4 +211,29 @@ public enum SegueTrait<N: Node>: Hashable {
     case context
     /// Convenience trait combining `.cover` and `.context`
     case modal
+}
+
+/// Operations are returned by the graph's `edit(segue:)` method and mutate one or multiple segues.
+public struct SegueTraitOperation<N: Node> {
+    let graph: NavigationGraph<N>
+
+    /// Adds a new trait to the selected segue/segues
+    @discardableResult public func add(trait: SegueTrait<N>) -> Self {
+        .init(graph: graph)
+    }
+
+    /// Removes a trait from the selected segue/segues. If the trait is not present, the operation *silently* fails.
+    @discardableResult public func remove(trait: SegueTrait<N>) -> Self {
+        .init(graph: graph)
+    }
+
+    /// Clears all the traits from the selected segue/segues. If the segues have no traits, the operation *silently* fails.
+    @discardableResult public func clear() -> Self {
+        .init(graph: graph)
+    }
+
+    /// Filters the traits on the selected set of segues.
+    @discardableResult public func filter(_ isIncluded: (SegueTrait<N>) -> Bool) -> Self {
+        .init(graph: graph)
+    }
 }
