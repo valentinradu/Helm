@@ -86,19 +86,19 @@ extension NavigationGraph where N == KeyScreen {
         // initial
         // we initially disable the navigation to the dashboard and onboarding;
         // these are available only when the user is logged in
-        graph.add(trait: .redirect(to: graph.path(to: .gatekeeper)),
-                  path: graph.egressPath(from: .splash).trim(at: .gatekeeper))
+        graph.add(trait: .forward(to: graph.path(to: .gatekeeper)),
+                  segue: .splash => [.onboarding, .dashboard])
         // the compose screen is a modal
         graph.add(trait: .modal,
-                  path: graph.path(from: .dashboard => .compose))
+                  segue: .dashboard => .compose)
         // the onboarding screens can be navigating in a relative way using `.next()` and `.prev()` commands
         graph.add(trait: .next,
-                  path: graph.path(from: .onboardingUsername => .onboardingTutorial => .onboardingPrivacyPolicy => .dashboard))
+                  segue: .onboardingUsername => .onboardingTutorial => .onboardingPrivacyPolicy => .dashboard)
         graph.add(trait: .prev,
-                  path: graph.path(from: .onboardingPrivacyPolicy => .onboardingTutorial => .onboardingUsername))
+                  segue: .onboardingPrivacyPolicy => .onboardingTutorial => .onboardingUsername)
         // the root onboarding screen forwards to the first onboarding screen (username)
-        graph.add(trait: .redirect(to: graph.path(to: .onboardingUsername)),
-                  path: graph.egressPath(from: .onboarding))
+        graph.add(trait: .forward(to: graph.path(to: .onboardingUsername)),
+                  segue: .onboarding => .onboardingUsername)
 
         return graph
     }()

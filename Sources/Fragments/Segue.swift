@@ -2,39 +2,27 @@
 //  File.swift
 //
 //
-//  Created by Valentin Radu on 10/12/2021.
+//  Created by Valentin Radu on 28/12/2021.
 //
 
 import Foundation
-import SwiftUI
 
-/// A node is the atomic unit in a navigation graph. It usually represents a screen (or a part of it) in your app
+/// A node is the atomic unit in a navigation graph. It usually represents a screen or a part of a screen in your app.
 public protocol Node: Hashable {}
 
-public protocol SegueCollection {
-    associatedtype N: Node
-    var segues: [Segue<N>] { get }
-}
-
-precedencegroup GraphConnectorPrecedence {
+/// The precedence group used for the segue connector operators.
+precedencegroup SegueConnectorPrecedence {
     associativity: left
     assignment: false
 }
 
-infix operator =>: GraphConnectorPrecedence
-infix operator <=>: GraphConnectorPrecedence
+/// The one way graph connector operator
+infix operator =>: SegueConnectorPrecedence
 
-public struct Path<N: Node>: Hashable {
-    let nodes: [N]
-    public func trim(at: N) -> Path<N> {
-        .init(nodes: [])
-    }
+/// The two-way graph connector operator
+infix operator <=>: SegueConnectorPrecedence
 
-    public func trim(at: [N]) -> Path<N> {
-        .init(nodes: [])
-    }
-}
-
+/// Extend the node for segue connector operators
 public extension Node {
     static func => (lhs: Self, rhs: Self) -> OneToOneSegues<Self> {
         return OneToOneSegues(segues: [Segue(lhs, to: rhs)])
@@ -74,8 +62,9 @@ public extension Node {
     }
 }
 
-public struct OneToOneSegues<N: Node>: SegueCollection {
-    public let segues: [Segue<N>]
+/// One-to-one segues allow creating complex relationships between nodes in a graph using the segue connectors.
+public struct OneToOneSegues<N: Node> {
+    let segues: [Segue<N>]
 
     public static func => (lhs: Self, rhs: N) -> Self {
         if let last = lhs.segues.last {
@@ -122,8 +111,9 @@ public struct OneToOneSegues<N: Node>: SegueCollection {
     }
 }
 
-public struct ManyToOneSegues<N: Node>: SegueCollection {
-    public let segues: [Segue<N>]
+/// Many-to-one segues allow creating complex relationships between nodes in a graph using the segue connectors.
+public struct ManyToOneSegues<N: Node> {
+    let segues: [Segue<N>]
 
     public static func => (lhs: Self, rhs: N) -> OneToOneSegues<N> {
         if let last = lhs.segues.last {
@@ -180,15 +170,16 @@ public struct ManyToOneSegues<N: Node>: SegueCollection {
     }
 }
 
-public struct OneToManySegues<N: Node>: SegueCollection {
+/// One-to-many segues allow creating complex relationships between nodes in a graph using the segue connectors.
+public struct OneToManySegues<N: Node> {
     public let segues: [Segue<N>]
 }
 
-public struct Segue<N: Node> {
+public struct Segue<N: Node>: Hashable {
     let `in`: N
     let out: N
 
-    /// Segues connect two nodes in a navigation graph forming a directed link.
+    /// Segues are the edges between the navigation graph's nodes.
     /// - parameter in: The input node (starting node)
     /// - parameter out: The output node (node to connect)
     public init(_ in: N, to out: N) {
@@ -197,89 +188,25 @@ public struct Segue<N: Node> {
     }
 }
 
-/// Segue traits define the navigation behaviour between nodes
-public enum PathTrait<N: Node>: Hashable {
-    /// When navigating using next/prev commands, it points to the next node
+/// Segue traits define the navigation rules between nodes.
+/// Each segue can have multiple rules, editable at any time in the app's lifecycle.
+public enum SegueTrait<N: Node>: Hashable {
+    /// Used to determine the next node when calling the relative `.next()` command.
     case next
-    /// When navigating using next/prev commands, it points to the previous node
+    /// Used to determine the prev node when calling the relative `.prev()` command.
     case prev
-    /// Redirects to another path which has to be reachable from the current navigation graph state
-    case redirect(to: Path<N>)
-    /// Disables the path
-    case disable
-    /// Marks the path as inclusive. Normal nodes are exclusive relative to their origin node.
-    /// In other words, when navigating to a node, all its siblings become inactive, while itself becomes active.
-    /// If a path is marked `.inclusive`, this behaviour is disabled and multiple nodes can be active from the same parent node.
-    case inclusive
-    /// The closest active `.root` node becomes inactive when calling navigation graph's `dismiss()` no matter the active graph layout.
-    case root
-    /// `.inclusive` and `.root`
+    /// Forwards the navigation to another flow.
+    /// The new flow has to have at least one node already presented (the binding point) and all its nodes should be reachable.
+    case forward(to: Flow<N>)
+    /// Disables the segue. For all purposes, the segue behaves as it was never created.
+    case disabled
+    /// Presents the segue's out node by overlapping it with its siblings instead of replacing them.
+    /// Nodes connected by normal segues are exclusive relative to their siblings.
+    /// In other words, when navigating to a node, all its siblings become inactive, while itself becomes active (presented).
+    /// If a segue is marked `.cover`, this behaviour is disabled and multiple nodes can be presented from the same parent node.
+    case cover
+    /// Used when calling the relative `.dismiss()` command to determine the closest context node that should be dismissed.
+    case context
+    /// Convenience trait combining `.cover` and `.context`
     case modal
-}
-
-/// A flow contains multiple segue-connected nodes
-public struct Flow<N: Node> {
-    public init() {}
-    /// Connects one node to another using a segue
-    /// - parameter segue: The segue
-    public mutating func add(segue: Segue<N>) {}
-
-    /// Connects multiple nodes to a single one using multiple segues
-    /// - parameter segue: The segue collection
-    // We avoid using a protocol for all collection and use overriding because of a Swift typesystem the limitation: this way we can reference node without fully qualify it (i.e. `KeyScreen.home` vs `.home`)
-    public mutating func add(segue: OneToOneSegues<N>) {}
-
-    public mutating func add(segue: OneToManySegues<N>) {}
-
-    public mutating func add(segue: ManyToOneSegues<N>) {}
-}
-
-public class NavigationGraph<N: Node>: ObservableObject {
-    public init(flow: Flow<N>) {}
-
-    public func path(to: N) -> Path<N> {
-        .init(nodes: [])
-    }
-
-    public func path(from: Segue<N>) -> Path<N> {
-        .init(nodes: [])
-    }
-
-    public func path(from: OneToOneSegues<N>) -> Path<N> {
-        .init(nodes: [])
-    }
-
-    public func path(from: OneToManySegues<N>) -> Path<N> {
-        .init(nodes: [])
-    }
-
-    public func path(from: ManyToOneSegues<N>) -> Path<N> {
-        .init(nodes: [])
-    }
-
-    public func ingressPath(to: N) -> Path<N> {
-        .init(nodes: [])
-    }
-
-    public func egressPath(from: N) -> Path<N> {
-        .init(nodes: [])
-    }
-
-    public func add(trait: PathTrait<N>, path: Path<N>) {}
-
-    public func present(node: N) {}
-
-    public func next() {}
-
-    public func prev() {}
-
-    public func dismiss() {}
-
-    public func isPresented(_ node: N) -> Bool {
-        return true
-    }
-
-    public func isPresented(_ node: N) -> Binding<Bool> {
-        return .constant(true)
-    }
 }
