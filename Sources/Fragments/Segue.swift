@@ -196,8 +196,8 @@ public enum SegueTrait<N: Node>: Hashable {
     /// Used to determine the prev node when calling the relative `.prev()` command.
     case prev
     /// Forwards the navigation to another flow.
-    /// The new flow has to have at least one node already presented (the binding point) and all its nodes should be reachable.
-    case forward(to: Flow<N>)
+    /// The new flow has to be reachable. In other words, at least one node has to be at a segue's distance from the currently presented ones.
+    case forward(flow: Flow<N>)
     /// Disables the segue. For all purposes, the segue behaves as it was never created.
     case disabled
     /// Presents the segue's out node by overlapping it with its siblings instead of replacing them.

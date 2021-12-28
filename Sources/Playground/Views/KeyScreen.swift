@@ -46,8 +46,8 @@ enum KeyScreen: Node {
     case updateUsername
 }
 
-extension NavigationGraph where N == KeyScreen {
-    static var main: NavigationGraph<N> = {
+extension Flow where N == KeyScreen {
+    static var main: Flow<N> = {
         var flow: Flow<N> = .init()
         // from `.splash` (initial loading screen) to any of the
         // `.gatekeeper`, `.onboarding`, `.dashboard` screens,
@@ -79,26 +79,37 @@ extension NavigationGraph where N == KeyScreen {
         // root to any of the items and back
         flow.add(segue: KeyScreen.settings <=> [KeyScreen.updateAvatar, KeyScreen.updateBio, KeyScreen.updateUsername])
 
-        let graph = NavigationGraph(flow: flow)
+        return flow
+    }()
+}
+
+extension NavigationGraph where N == KeyScreen {
+    static var main: NavigationGraph<N> = {
+        let graph = NavigationGraph(flow: Flow.main)
         // some segues require additional fine tuning;
         // although segue traits are mutable and can be added at any
         // time, however, we start with some to define the
         // initial
         // we initially disable the navigation to the dashboard and onboarding;
         // these are available only when the user is logged in
-        graph.add(trait: .forward(to: graph.path(to: .gatekeeper)),
-                  segue: .splash => [.onboarding, .dashboard])
+        graph
+            .edit(segue: .splash => [.onboarding, .dashboard])
+            .add(trait: .forward(flow: .from(nodes: .gatekeeper)))
         // the compose screen is a modal
-        graph.add(trait: .modal,
-                  segue: .dashboard => .compose)
+        graph
+            .edit(segue: .dashboard => .compose)
+            .add(trait: .modal)
         // the onboarding screens can be navigating in a relative way using `.next()` and `.prev()` commands
-        graph.add(trait: .next,
-                  segue: .onboardingUsername => .onboardingTutorial => .onboardingPrivacyPolicy => .dashboard)
-        graph.add(trait: .prev,
-                  segue: .onboardingPrivacyPolicy => .onboardingTutorial => .onboardingUsername)
-        // the root onboarding screen forwards to the first onboarding screen (username)
-        graph.add(trait: .forward(to: graph.path(to: .onboardingUsername)),
-                  segue: .onboarding => .onboardingUsername)
+        graph
+            .edit(segue: .onboardingUsername => .onboardingTutorial => .onboardingPrivacyPolicy => .dashboard)
+            .add(trait: .next)
+        graph
+            .edit(segue: .onboardingPrivacyPolicy => .onboardingTutorial => .onboardingUsername)
+            .add(trait: .prev)
+        // the navigation detail view should be dismissed by `.dismiss()`
+        graph
+            .edit(segue: .library => .article)
+            .add(trait: .context)
 
         return graph
     }()
