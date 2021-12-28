@@ -75,12 +75,12 @@ public struct OneToOneSegues<N: Node> {
         }
     }
 
-    public static func => (lhs: Self, rhs: [N]) -> ManyToOneSegues<N> {
+    public static func => (lhs: Self, rhs: [N]) -> OneToManySegues<N> {
         if let last = lhs.segues.last {
-            return ManyToOneSegues(segues: lhs.segues + rhs.map { Segue(last.out, to: $0) })
+            return OneToManySegues(segues: lhs.segues + rhs.map { Segue(last.out, to: $0) })
         }
         else {
-            return ManyToOneSegues(segues: [])
+            return OneToManySegues(segues: [])
         }
     }
 
@@ -96,9 +96,9 @@ public struct OneToOneSegues<N: Node> {
         }
     }
 
-    public static func <=> (lhs: Self, rhs: [N]) -> ManyToOneSegues<N> {
+    public static func <=> (lhs: Self, rhs: [N]) -> OneToManySegues<N> {
         if let last = lhs.segues.last {
-            return ManyToOneSegues(segues: lhs.segues + rhs.flatMap {
+            return OneToManySegues(segues: lhs.segues + rhs.flatMap {
                 [
                     Segue(last.out, to: $0),
                     Segue($0, to: last.out)
@@ -106,7 +106,7 @@ public struct OneToOneSegues<N: Node> {
             })
         }
         else {
-            return ManyToOneSegues(segues: [])
+            return OneToManySegues(segues: [])
         }
     }
 }
@@ -125,15 +125,15 @@ public struct ManyToOneSegues<N: Node> {
         }
     }
 
-    public static func => (lhs: Self, rhs: [N]) -> OneToOneSegues<N> {
+    public static func => (lhs: Self, rhs: [N]) -> OneToManySegues<N> {
         if let last = lhs.segues.last {
             let segues = lhs.segues.filter { $0.out == last.out }
-            return OneToOneSegues(segues: lhs.segues + segues.flatMap { a in
+            return OneToManySegues(segues: lhs.segues + segues.flatMap { a in
                 rhs.map { Segue(a.out, to: $0) }
             })
         }
         else {
-            return OneToOneSegues(segues: [])
+            return OneToManySegues(segues: [])
         }
     }
 
@@ -152,10 +152,10 @@ public struct ManyToOneSegues<N: Node> {
         }
     }
 
-    public static func <=> (lhs: Self, rhs: [N]) -> OneToOneSegues<N> {
+    public static func <=> (lhs: Self, rhs: [N]) -> OneToManySegues<N> {
         if let last = lhs.segues.last {
             let segues = lhs.segues.filter { $0.out == last.out }
-            return OneToOneSegues(segues: lhs.segues + segues.flatMap { a in
+            return OneToManySegues(segues: lhs.segues + segues.flatMap { a in
                 rhs.flatMap {
                     [
                         Segue(a.out, to: $0),
@@ -165,7 +165,7 @@ public struct ManyToOneSegues<N: Node> {
             })
         }
         else {
-            return OneToOneSegues(segues: [])
+            return OneToManySegues(segues: [])
         }
     }
 }
@@ -173,6 +173,31 @@ public struct ManyToOneSegues<N: Node> {
 /// One-to-many segues allow creating complex relationships between nodes in a graph using the segue connectors.
 public struct OneToManySegues<N: Node> {
     public let segues: [Segue<N>]
+
+    public static func => (lhs: Self, rhs: N) -> ManyToOneSegues<N> {
+        if let last = lhs.segues.last {
+            let segues = lhs.segues.filter { $0.in == last.in }
+            return ManyToOneSegues(segues: lhs.segues + segues.map { Segue($0.out, to: rhs) })
+        }
+        else {
+            return ManyToOneSegues(segues: [])
+        }
+    }
+
+    public static func <=> (lhs: Self, rhs: N) -> ManyToOneSegues<N> {
+        if let last = lhs.segues.last {
+            let segues = lhs.segues.filter { $0.in == last.in }
+            return ManyToOneSegues(segues: lhs.segues + segues.flatMap {
+                [
+                    Segue($0.out, to: rhs),
+                    Segue(rhs, to: $0.out)
+                ]
+            })
+        }
+        else {
+            return ManyToOneSegues(segues: [])
+        }
+    }
 }
 
 public struct Segue<N: Node>: Hashable {

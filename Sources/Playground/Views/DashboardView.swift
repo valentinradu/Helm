@@ -111,7 +111,7 @@ struct DashboardView: View {
                     }
             }
         }
-        .fullScreenCover(isPresented: nav.isPresented(.compose)) {
+        .sheet(isPresented: nav.isPresented(.compose)) {
             ComposeView()
         }
         .onChange(of: selection) {
