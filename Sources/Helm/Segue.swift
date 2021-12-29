@@ -216,17 +216,12 @@ public struct Segue<N: Node>: Hashable {
 /// Segue traits define the navigation rules between nodes.
 /// Each segue can have multiple rules, editable at any time in the app's lifecycle.
 public enum SegueTrait<N: Node>: Hashable {
-    /// Used to determine the next node when calling the relative `.next()` command.
+    /// Used to determine the next node when calling the relative `.forward()` command.
     /// Only one segue can have the `.next` trait between siblings.
-    /// A segue can't be have both `.next` and `.prev` traits
     case next
-    /// Used to determine the prev node when calling the relative `.prev()` command.
-    /// Only one segue can have the `.prev` trait between siblings.
-    /// A segue can't be have both `.next` and `.prev` traits
-    case prev
     /// Forwards the navigation to another flow.
-    /// The new flow has to be reachable. In other words, at least one node has to be at a segue's distance from the currently presented ones.
-    case forward(flow: Flow<N>)
+    /// The new flow has to be reachable. In other words, the first node in the flow has to be already presented.
+    case redirect(flow: Flow<N>)
     /// Disables the segue. For all purposes, the segue behaves as it was never created.
     case disabled
     /// Presents the segue's out node by overlapping it with its siblings instead of replacing them.
@@ -242,25 +237,25 @@ public enum SegueTrait<N: Node>: Hashable {
 
 /// Operations are returned by the graph's `edit(segue:)` method and mutate one or multiple segues.
 public struct SegueTraitOperation<N: Node> {
-    let graph: NavigationGraph<N>
+    let segues: [Segue<N>]
 
     /// Adds a new trait to the selected segue/segues
     @discardableResult public func add(trait: SegueTrait<N>) -> Self {
-        .init(graph: graph)
+        .init(segues: segues)
     }
 
     /// Removes a trait from the selected segue/segues. If the trait is not present, the operation *silently* fails.
     @discardableResult public func remove(trait: SegueTrait<N>) -> Self {
-        .init(graph: graph)
+        .init(segues: segues)
     }
 
     /// Clears all the traits from the selected segue/segues. If the segues have no traits, the operation *silently* fails.
     @discardableResult public func clear() -> Self {
-        .init(graph: graph)
+        .init(segues: segues)
     }
 
     /// Filters the traits on the selected set of segues.
     @discardableResult public func filter(_ isIncluded: (SegueTrait<N>) -> Bool) -> Self {
-        .init(graph: graph)
+        .init(segues: segues)
     }
 }

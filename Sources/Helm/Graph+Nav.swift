@@ -21,14 +21,16 @@ public extension NavigationGraph {
     func present(flow: Flow<N>) {}
 
     /// Looks at the most recently presented node and navigates any connected segue that has the `.next` trait, if any.
-    /// Used mostly for chained navigation like tutorials and onboarding screens.
-    func next() {}
+    /// Used mostly to define the next setp in chained navigation like tutorials and onboarding screens.
+    func forward() {}
 
-    /// Looks at the most recently presented node and navigates any connected segue that has the `.prev` trait, if any.
-    /// Used mostly for chained navigation like tutorials and onboarding screens.
-    func prev() {}
+    /// Looks at the most recently presented node and navigates using the segue that points to the previously presented node. Note that there might be no such a segue, in which case back does nothing.
+    func back() {}
 
-    /// Looks for the latest node that has a `.conext` trait segue comming in and deactivates it (and all the nodes that originate from it)
+    /// Attempts to reach a node navigating using only reverse segues relative to the ones already presented.
+    func back(to: N) {}
+
+    /// Looks for the latest node that has a `.context` trait and deactivates it (and all the nodes originating from it) by following the reverse segue relative to the one that presented the node (if one is present).
     /// Used mostly for modals (where dismissing will close the modal, regardless of the navigation state) and master-detail lists, where dismissing will hide the details)
     func dismiss() {}
 
@@ -39,7 +41,7 @@ public extension NavigationGraph {
     }
 
     /// A special `isPresented(node:)` function that returns a binding.
-    /// When the value is set to false from the binding, the node gets dismissed if it's a context, or simply deactivated if not.
+    /// When the value is set to false from the binding, the node becomes inactive, trimming all the nodes that originate from it as well.
     func isPresented(_ node: N) -> Binding<Bool> {
         return .constant(true)
     }

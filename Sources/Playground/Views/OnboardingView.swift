@@ -5,7 +5,7 @@
 //  Created by Valentin Radu on 27/12/2021.
 //
 
-import Fragments
+import Helm
 import SwiftUI
 
 struct OnboardingUsernameView: View {
@@ -15,7 +15,7 @@ struct OnboardingUsernameView: View {
     var body: some View {
         VStack(spacing: 60) {
             TextField("Username", text: $username)
-            Button(action: { nav.next() }) {
+            Button(action: { nav.forward() }) {
                 HStack {
                     Text("Next")
                     Image(systemName: "arrow.forward.circle")
@@ -31,7 +31,7 @@ struct OnboardingTutorialView: View {
     var body: some View {
         VStack(spacing: 60) {
             Text("Some possible long tutorial")
-            Button(action: { nav.next() }) {
+            Button(action: { nav.forward() }) {
                 HStack {
                     Text("Next")
                     Image(systemName: "arrow.forward.circle")
@@ -47,7 +47,7 @@ struct OnboardingTermsView: View {
     var body: some View {
         VStack(spacing: 60) {
             Text("Full terms and conditions")
-            Button(action: { nav.next() }) {
+            Button(action: { nav.forward() }) {
                 HStack {
                     Text("Finish")
                     Image(systemName: "checkmark.circle")

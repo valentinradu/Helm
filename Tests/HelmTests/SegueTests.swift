@@ -1,13 +1,12 @@
-@testable import Fragments
+@testable import Helm
 import XCTest
 
 final class SegueTests: XCTestCase {
     func testOneWayConnectors() {
-        var flow = Flow<TestNode>()
-        flow.add(segue: .a => .b)
-        flow.add(segue: .b => .c => .d)
-        flow.add(segue: .d => [.e, .f] => .g)
-        flow.add(segue: [.g, .i] => .j)
+        let flow = Flow<TestNode>(segue: .a => .b)
+            .add(segue: .b => .c => .d)
+            .add(segue: .d => [.e, .f] => .g)
+            .add(segue: [.g, .i] => .j)
 
         XCTAssertEqual(flow.segues,
                        [
@@ -24,11 +23,10 @@ final class SegueTests: XCTestCase {
     }
 
     func testTwoWayConnectors() {
-        var flow = Flow<TestNode>()
-        flow.add(segue: .a <=> .b)
-        flow.add(segue: .b <=> .c <=> .d)
-        flow.add(segue: .d <=> [.e, .f] <=> .g)
-        flow.add(segue: [.g, .i] <=> .j)
+        let flow = Flow<TestNode>(segue: .a <=> .b)
+            .add(segue: .b <=> .c <=> .d)
+            .add(segue: .d <=> [.e, .f] <=> .g)
+            .add(segue: [.g, .i] <=> .j)
 
         XCTAssertEqual(flow.segues,
                        [
@@ -54,8 +52,7 @@ final class SegueTests: XCTestCase {
     }
 
     func testAddTrait() {
-        var flow = Flow<TestNode>()
-        flow.add(segue: .a => [.b, .c])
+        let flow = Flow<TestNode>(segue: .a => [.b, .c])
         let graph = NavigationGraph(flow: flow)
         graph
             .edit(segue: .a => [.b, .c])
@@ -70,8 +67,7 @@ final class SegueTests: XCTestCase {
     }
 
     func testRemoveTrait() {
-        var flow = Flow<TestNode>()
-        flow.add(segue: .a => .b)
+        let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
         graph
             .edit(segue: .a => .b)
@@ -81,8 +77,7 @@ final class SegueTests: XCTestCase {
     }
 
     func testClearTrait() {
-        var flow = Flow<TestNode>()
-        flow.add(segue: .a => .b)
+        let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
         graph
             .edit(segue: .a => .b)
@@ -92,8 +87,7 @@ final class SegueTests: XCTestCase {
     }
 
     func testFilterTrait() {
-        var flow = Flow<TestNode>()
-        flow.add(segue: .a => .b)
+        let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
         graph
             .edit(segue: .a => .b)
@@ -101,18 +95,5 @@ final class SegueTests: XCTestCase {
             .add(trait: .next)
             .filter { $0 == .next }
         XCTAssertEqual(graph.traits, [Segue(.a, to: .b): [.next]])
-    }
-
-    func testNextPrevAreExclusive() {
-        setenv("HELM_DISABLE_ASSERTIONS", "1", 1)
-        var flow = Flow<TestNode>()
-        flow.add(segue: .a => .b)
-        let graph = NavigationGraph(flow: flow)
-        graph
-            .edit(segue: .a => .b)
-            .add(trait: .prev)
-            .add(trait: .next)
-        XCTAssertEqual(graph.traits, [Segue(.a, to: .b): [.next]])
-        unsetenv("HELM_DISABLE_ASSERTIONS")
     }
 }
