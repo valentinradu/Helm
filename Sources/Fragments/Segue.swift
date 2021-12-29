@@ -218,9 +218,11 @@ public struct Segue<N: Node>: Hashable {
 public enum SegueTrait<N: Node>: Hashable {
     /// Used to determine the next node when calling the relative `.next()` command.
     /// Only one segue can have the `.next` trait between siblings.
+    /// A segue can't be have both `.next` and `.prev` traits
     case next
     /// Used to determine the prev node when calling the relative `.prev()` command.
-    /// /// Only one segue can have the `.prev` trait between siblings.
+    /// Only one segue can have the `.prev` trait between siblings.
+    /// A segue can't be have both `.next` and `.prev` traits
     case prev
     /// Forwards the navigation to another flow.
     /// The new flow has to be reachable. In other words, at least one node has to be at a segue's distance from the currently presented ones.

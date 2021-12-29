@@ -16,4 +16,7 @@ enum TestNode: Node {
     case e
     case f
     case g
+    case h
+    case i
+    case j
 }
