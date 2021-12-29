@@ -23,30 +23,30 @@
         <path d="M55,114 C58.3137085,114 61,116.686292 61,120 L61,132 L62,132 L62,141 L61,141 L61,179 C61,182.313708 58.3137085,185 55,185 L33,185 C29.6862915,185 27,182.313708 27,179 L27,143 L26,143 L26,137 L27,137 L27,136 L26,136 L26,130 L27,130 L27,128 L26,128 L26,125 L27,125 L27,120 C27,116.686292 29.6862915,114 33,114 L55,114 Z M55,116 L52,116 L52,117 C52,117.552285 51.5522847,118 51,118 L36,118 C35.4477153,118 35,117.552285 35,117 L35,116 L33,116 C30.8578046,116 29.1089211,117.683968 29.0048953,119.80036 L29,120 L29,179 C29,181.142195 30.6839685,182.891079 32.8003597,182.995105 L33,183 L55,183 C57.1421954,183 58.8910789,181.316032 58.9951047,179.19964 L59,179 L59,120 C59,117.857805 57.3160315,116.108921 55.1996403,116.004895 L55,116 Z" id="Combined-Shape" fill="#0285E9" fill-rule="nonzero"></path>
         <path d="M141,114 C144.313708,114 147,116.686292 147,120 L147,132 L148,132 L148,141 L147,141 L147,179 C147,182.313708 144.313708,185 141,185 L119,185 C115.686292,185 113,182.313708 113,179 L113,143 L112,143 L112,137 L113,137 L113,136 L112,136 L112,130 L113,130 L113,128 L112,128 L112,125 L113,125 L113,120 C113,116.686292 115.686292,114 119,114 L141,114 Z M141,116 L138,116 L138,117 C138,117.552285 137.552285,118 137,118 L122,118 C121.447715,118 121,117.552285 121,117 L121,116 L119,116 C116.857805,116 115.108921,117.683968 115.004895,119.80036 L115,120 L115,179 C115,181.142195 116.683968,182.891079 118.80036,182.995105 L119,183 L141,183 C143.142195,183 144.891079,181.316032 144.995105,179.19964 L145,179 L145,120 C145,117.857805 143.316032,116.108921 141.19964,116.004895 L141,116 Z" id="Combined-Shape-Copy" fill="#0285E9" fill-rule="nonzero"></path>
         <path d="M333,114 C336.313708,114 339,116.686292 339,120 L339,132 L340,132 L340,141 L339,141 L339,179 C339,182.313708 336.313708,185 333,185 L311,185 C307.686292,185 305,182.313708 305,179 L305,143 L304,143 L304,137 L305,137 L305,136 L304,136 L304,130 L305,130 L305,128 L304,128 L304,125 L305,125 L305,120 C305,116.686292 307.686292,114 311,114 L333,114 Z M333,116 L330,116 L330,117 C330,117.552285 329.552285,118 329,118 L314,118 C313.447715,118 313,117.552285 313,117 L313,116 L311,116 C308.857805,116 307.108921,117.683968 307.004895,119.80036 L307,120 L307,179 C307,181.142195 308.683968,182.891079 310.80036,182.995105 L311,183 L333,183 C335.142195,183 336.891079,181.316032 336.995105,179.19964 L337,179 L337,120 C337,117.857805 335.316032,116.108921 333.19964,116.004895 L333,116 Z" id="Combined-Shape-Copy-2" fill="#0285E9" fill-rule="nonzero"></path>
-        <text id=".splash" font-family="Helvetica" font-size="12" font-weight="normal" fill="#8C8C8C">
-            <tspan x="25.4892578" y="202">.splash</tspan>
+        <text id=".splash" font-family="Helvetica" font-size="13" font-weight="normal" fill="#8C8C8C">
+            <tspan x="23.9050293" y="202">.splash</tspan>
         </text>
-        <text id=".dashboard" font-family="Helvetica" font-size="12" font-weight="normal" fill="#8C8C8C">
-            <tspan x="291.476562" y="202">.dashboard</tspan>
+        <text id=".dashboard" font-family="Helvetica" font-size="13" font-weight="normal" fill="#8C8C8C">
+            <tspan x="288.974609" y="202">.dashboard</tspan>
         </text>
-        <text id=".compose" font-family="Helvetica" font-size="12" font-weight="normal" fill="#8C8C8C">
-            <tspan x="386.487305" y="202">.compose</tspan>
+        <text id=".compose" font-family="Helvetica" font-size="13" font-weight="normal" fill="#8C8C8C">
+            <tspan x="384.31958" y="202">.compose</tspan>
         </text>
-        <text id=".login" font-family="Helvetica" font-size="12" font-weight="normal" fill="#8C8C8C">
-            <tspan x="205.15625" y="106">.login</tspan>
+        <text id=".login" font-family="Helvetica" font-size="13" font-weight="normal" fill="#8C8C8C">
+            <tspan x="203.960938" y="106">.login</tspan>
         </text>
-        <text id=".register" font-family="Helvetica" font-size="12" font-weight="normal" fill="#8C8C8C">
-            <tspan x="198.326172" y="187">.register</tspan>
+        <text id=".register" font-family="Helvetica" font-size="13" font-weight="normal" fill="#8C8C8C">
+            <tspan x="196.52002" y="187">.register</tspan>
         </text>
         <use id="Rectangle" stroke="#8CCDFF" mask="url(#mask-2)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-1"></use>
         <use id="Rectangle-Copy-4" stroke="#8CCDFF" mask="url(#mask-4)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-3"></use>
         <use id="Rectangle-Copy-6" stroke="#8CCDFF" mask="url(#mask-6)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-5"></use>
         <use id="Rectangle-Copy-5" stroke="#8CCDFF" mask="url(#mask-8)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-7"></use>
-        <text id=".forgotPass" font-family="Helvetica" font-size="12" font-weight="normal" fill="#8C8C8C">
-            <tspan x="189.151367" y="268">.forgotPass</tspan>
+        <text id=".forgotPass" font-family="Helvetica" font-size="13" font-weight="normal" fill="#8C8C8C">
+            <tspan x="186.622314" y="268">.forgotPass</tspan>
         </text>
-        <text id=".gatekeeper" font-family="Helvetica" font-size="12" font-weight="normal" fill="#8C8C8C">
-            <tspan x="98.3095703" y="202">.gatekeeper</tspan>
+        <text id=".gatekeeper" font-family="Helvetica" font-size="13" font-weight="normal" fill="#8C8C8C">
+            <tspan x="95.6687012" y="202">.gatekeeper</tspan>
         </text>
     </g>
 </svg>
