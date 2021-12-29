@@ -51,7 +51,7 @@ extension Flow where N == KeyScreen {
         // from `.splash` (initial loading screen) to any of the
         // `.gatekeeper`, `.onboarding`, `.dashboard` screens,
         // depending on the app state (user logged in, onboarded etc)
-        var flow = Flow<KeyScreen>(segue: .splash => [.gatekeeper, .onboarding, .dashboard])
+        let flow = Flow<KeyScreen>(segue: .splash => [.gatekeeper, .onboarding, .dashboard])
             // from `.gatekeeper` (the authentication-related screen),
             // to any of the `.login`, `.register` or `.forgotPass`, depending
             // on user navigation. We'll later on set the default screen to `.login`
