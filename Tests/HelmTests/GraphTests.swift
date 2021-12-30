@@ -96,7 +96,15 @@ final class GraphTests: XCTestCase {
     }
     
     func testAutoForward() {
+        let flow = Flow<TestNode>(segue: .a => [.b, .c])
+        let graph = NavigationGraph(flow: flow)
+        graph.edit(segue: .a => .b)
+            .add(trait: .redirect(to: Flow(segue: .a => .c)))
         
+        graph.present(node: .b)
+        XCTAssertTrue(graph.isPresented(.a))
+        XCTAssertFalse(graph.isPresented(.b))
+        XCTAssertTrue(graph.isPresented(.c))
     }
     
     func testGoForward() {
