@@ -48,6 +48,7 @@ enum Sections: Node {
     case compose
     
     // and so on ...
+}
 ```
 
 Conceptually, we now have:
