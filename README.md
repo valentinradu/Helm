@@ -23,12 +23,12 @@ Helm is a declarative, graph-based navigation library for SwiftUI. It's like a r
 * [License](#license)
 
 ## Features
-✅ declarative
-✅ lightweight, expressive and easy to use
-✅ deeplinking and snapshot testing ready
-✅ built for all Apple platforms that support SwiftUI
-✅ zero 3rd party dependencies 
-✅ fully tested
+- ✅ declarative
+- ✅ lightweight, expressive and easy to use
+- ✅ deeplinking and snapshot testing ready
+- ✅ built for all Apple platforms that support SwiftUI
+- ✅ zero 3rd party dependencies 
+- ✅ fully tested
 
 ## Overview
 
@@ -39,7 +39,7 @@ Helm has a declarative approach, which means you have to first construct the und
 First we have define all the possible dynamic sections of the app: some might be full screens, others, just overlapping views, like a player in a music listening app. This is usually done in an `enum` conforming to the `Node` protocol. This step is done as soon as the app starts and the resulting graph is not mutable (although you can mutate the traits as we will see later).
 
 ```swift
-enum Sections: Node {
+enum Section: Node {
     // the first screen right after the app starts
     case splash
 
@@ -75,7 +75,7 @@ We have to first define the segues. For that, we will use a `Flow` which is just
 
 ```swift
 // don't do this, use segue operators
-let flow = Flow<Sections>(segue: Segue(.splash, to: .gatekeeper))
+let flow = Flow<Section>(segue: Segue(.splash, to: .gatekeeper))
     .add(segue: Segue(.splash, to: .dashboard))
     .add(segue: Segue(.gatekeeper, to: .login))
     .add(segue: Segue(.gatekeeper, to: .register))
@@ -91,7 +91,7 @@ Using the operators, the full flow definition becomes:
 ```swift
 // depending on whether the user is logged in or not, 
 // you can navigate from the .splash screen to the .gatekeeper or directly to the .dashboard
-let flow = Flow<Sections>(segue: .splash => [.gatekeeper, .dashboard])
+let flow = Flow<Section>(segue: .splash => [.gatekeeper, .dashboard])
     // the gatekeeper contains three sub-sections
     .add(segue: .gatekeeper => .login)
     // from each of the gatekeeper sub-section you can navigate to the others
@@ -136,3 +136,83 @@ Resulting our final navigation graph.
 <p align="center">
   <img src="flow-with-segues-and-traits.svg" />
 </p>
+
+### Navigating inside SwiftUI views
+
+`NavigationGraph` is an `ObservableObject`, we need to inject it in your views hierachy using `environmentObject` at the top-most level so all of the views can access it.
+
+
+```swift
+struct RootView: View {
+    var body: some View {
+        ZStack {
+            //
+        }
+        // in this example the graph we constructed is stored in a static field
+        .environmentObject(NavigationGraph.main)
+    }
+}
+```
+
+Once we can access the navigation graph, we can navigate it using:
+
+- `present(node:)`: presents a node; does nothing if the target node is not connected to the presented nodes
+- `present(flow:)`: presents a flow or, in other words, a collection of nodes; does nothing if the first node in the sequence is not connected to the currently presented nodes
+- `forward()`: attempts to navigate forward when there's exactly one egress segue from the last presented node; does nothing if there's no egress segue or if there are many  
+- `back()`: attempts to revert the last visited segue using its counterpart; does nothing if there's no counterpart (i.e. `.login => .register`s counterpart is `.register => .login`) 
+- `back(at:)`: similar to `back`, except it attempts to reach a certain node by going back as many segues as needed; does nothing if the node is not encoutered while navigating back to the bottom of the navigation stack
+- `dismiss()`: deactivates the first node whose presenting segue has a `.context` or `.modal` trait
+    
+Finally, we use `isPresented(_ node:)` to hide or show a view when a node is presented or not. `isPresented` has 2 variants, one that returns a `Bool`, ideal for simple `if`s, and one that returns a binding, ready to work with many of Apple's presentation functions like `.sheet(isPresented:, content:)`.
+
+```swift
+struct DashboardView: View {
+    @EnvironmentObject private var nav: NavigationGraph<Section>
+
+    var body: some View {
+        VStack {
+            HStack {
+                Spacer()
+                Button(action: { nav.present(node: .compose) }) {
+                    Image(systemName: "plus.square.on.square")
+                }
+            }
+            if nav.isPresented(.library) {
+                LibraryView()
+                    .tabItem {
+                        Label("Library", systemImage: "book.closed")
+                    }
+            }
+            if nav.isPresented(.library) {
+                NewsView()
+                    .tabItem {
+                        Label("News", systemImage: "newspaper")
+                    }
+            }
+        }
+        .sheet(isPresented: nav.isPresented(.compose)) {
+            ComposeView()
+        }
+    }
+}
+```
+
+## Error handling
+
+There are no user-facing errors in Helm. All the possible errors originate from misconfigurations or unexpected usage (i.e. trying to follow a disabled segue). In Helm, such errors are logged in production and asserted in development. If for some reason you want to disable assertions in development as well (although, I'd strongly recommend against it, since it hinders testing), you can set `HELM_DISABLE_ASSERTIONS` environment variable to "1".
+
+## Deeplinking
+
+Deeplinking is really easy with Helm. All we have to do is translate our deeplink path to a flow and then navigate to that flow (i.e. `nav.present(flow: .dashboard => [.compose, .news])` would navigate to the dashboard, in the news tab, having the compose article modal open). Note that the serialized deeplink path can't be a linear structure (i.e. .dashboard => .news) and it's more like a partial graph where multiple nodes can originate from the same parent. This enables complex overlapping UI.  
+
+## Snapshot testing
+
+With Helm snapshot testing can be fully automated by walking the entire available navigation graph for each possible state of the app. In our example above, since the `.dashboard` is not available while the user is unauthenticated, the walker would only snapshot the `.gatekeeper` nodes. Once we update the state, the rest of the graph will be snapshot as well.
+In the near future, I plan to implement the walker into Helm, making the process even easier. (PRs welcomed, of course)
+
+## Examples
+
+The package contains an extra project called `Playground`. It's integrating Helm with SwiftUI, including using `NavigationView`s, sheet modals, `TabView`, etc. Feel free to use it as a starting point.
+
+## License
+[MIT License](LICENSE)
