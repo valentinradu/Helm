@@ -12,7 +12,10 @@ import SwiftUI
 public class NavigationGraph<N: Node>: ObservableObject {
     @Published var traits: [Segue<N>: Set<SegueTrait<N>>] = [:]
     @Published var activeFlow: Flow<N> = .init(segues: [])
+    let flow: Flow<N> 
     /// Inits the navigation graph using a flow that defines all possible navigation in an app.
     /// When initializing the flow, the `in` node of the first added segue automatically becomes presented (active).
-    public init(flow: Flow<N>) {}
+    public init(flow: Flow<N>) {
+        self.flow = flow
+    }
 }

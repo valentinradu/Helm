@@ -15,8 +15,8 @@ final class SegueTests: XCTestCase {
                            Segue(.c, to: .d),
                            Segue(.d, to: .e),
                            Segue(.d, to: .f),
-                           Segue(.f, to: .g),
                            Segue(.e, to: .g),
+                           Segue(.f, to: .g),
                            Segue(.g, to: .j),
                            Segue(.i, to: .j),
                        ])
@@ -27,7 +27,7 @@ final class SegueTests: XCTestCase {
             .add(segue: .b <=> .c <=> .d)
             .add(segue: .d <=> [.e, .f] <=> .g)
             .add(segue: [.g, .i] <=> .j)
-
+        
         XCTAssertEqual(flow.segues,
                        [
                            Segue(.a, to: .b),
@@ -40,10 +40,10 @@ final class SegueTests: XCTestCase {
                            Segue(.e, to: .d),
                            Segue(.d, to: .f),
                            Segue(.f, to: .d),
-                           Segue(.f, to: .g),
-                           Segue(.g, to: .f),
                            Segue(.e, to: .g),
                            Segue(.g, to: .e),
+                           Segue(.f, to: .g),
+                           Segue(.g, to: .f),
                            Segue(.g, to: .j),
                            Segue(.j, to: .g),
                            Segue(.i, to: .j),

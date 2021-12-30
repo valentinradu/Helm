@@ -21,48 +21,48 @@ public struct Flow<N: Node>: Hashable {
     /// Initializes a flow with a single segue
     /// - parameter segue: The segue
     public init(segue: Segue<N>) {
-        segues = []
+        segues = [segue]
     }
 
     /// Initializes a flow using a collection of one-to-one segues
     /// - parameter segue: The segues
     public init(segue: OneToOneSegues<N>) {
-        segues = []
+        segues = segue.segues
     }
 
     /// Initializes a flow using a collection of one-to-many segues
     /// - parameter segue: The segues
     public init(segue: OneToManySegues<N>) {
-        segues = []
+        segues = segue.segues
     }
 
     /// Initializes a flow using a collection of many-to-one segues
     /// - parameter segue: The segues
     public init(segue: ManyToOneSegues<N>) {
-        segues = []
+        segues = segue.segues
     }
 
     /// Adds a new segue to the flow. The initial node has to be already presented.
     /// - parameter segue: The segue
     public func add(segue: Segue<N>) -> Flow<N> {
-        .init(segues: [])
+        .init(segues: segues + [segue])
     }
 
     /// Adds multiple one-to-one segues to the flow. The initial node has to be already presented.
     /// - parameter segue: The segues
     public func add(segue: OneToOneSegues<N>) -> Flow<N> {
-        .init(segues: [])
+        .init(segues: segues + segue.segues)
     }
 
     /// Adds multiple one-to-many segues to the flow. The initial node has to be already presented.
     /// - parameter segue: The segues
     public func add(segue: OneToManySegues<N>) -> Flow<N> {
-        .init(segues: [])
+        .init(segues: segues + segue.segues)
     }
 
     /// Adds multiple many-to-one segues to the flow. The initial node has to be already presented.
     /// - parameter segue: The segues
     public func add(segue: ManyToOneSegues<N>) -> Flow<N> {
-        .init(segues: [])
+        .init(segues: segues + segue.segues)
     }
 }

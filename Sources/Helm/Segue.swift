@@ -46,8 +46,8 @@ public extension Node {
     static func <=> (lhs: [Self], rhs: Self) -> ManyToOneSegues<Self> {
         return ManyToOneSegues(segues: lhs.flatMap {
             [
-                Segue(rhs, to: $0),
-                Segue($0, to: rhs)
+                Segue($0, to: rhs),
+                Segue(rhs, to: $0)
             ]
         })
     }
@@ -55,8 +55,8 @@ public extension Node {
     static func <=> (lhs: Self, rhs: [Self]) -> OneToManySegues<Self> {
         return OneToManySegues(segues: rhs.flatMap {
             [
-                Segue($0, to: lhs),
-                Segue(lhs, to: $0)
+                Segue(lhs, to: $0),
+                Segue($0, to: lhs)
             ]
         })
     }
@@ -87,8 +87,8 @@ public struct OneToOneSegues<N: Node> {
     public static func <=> (lhs: Self, rhs: N) -> Self {
         if let last = lhs.segues.last {
             return OneToOneSegues(segues: lhs.segues + [
-                Segue(last.out, to: rhs),
-                Segue(rhs, to: last.out)
+                Segue(last.in, to: rhs),
+                Segue(rhs, to: last.in)
             ])
         }
         else {
@@ -100,8 +100,8 @@ public struct OneToOneSegues<N: Node> {
         if let last = lhs.segues.last {
             return OneToManySegues(segues: lhs.segues + rhs.flatMap {
                 [
-                    Segue(last.out, to: $0),
-                    Segue($0, to: last.out)
+                    Segue(last.in, to: $0),
+                    Segue($0, to: last.in)
                 ]
             })
         }
@@ -139,11 +139,11 @@ public struct ManyToOneSegues<N: Node> {
 
     public static func <=> (lhs: Self, rhs: N) -> OneToOneSegues<N> {
         if let last = lhs.segues.last {
-            let segues = lhs.segues.filter { $0.out == last.out }
+            let segues = lhs.segues.filter { $0.in == last.in }
             return OneToOneSegues(segues: lhs.segues + segues.flatMap {
                 [
-                    Segue($0.out, to: rhs),
-                    Segue(rhs, to: $0.out)
+                    Segue($0.in, to: rhs),
+                    Segue(rhs, to: $0.in)
                 ]
             })
         }
@@ -154,12 +154,12 @@ public struct ManyToOneSegues<N: Node> {
 
     public static func <=> (lhs: Self, rhs: [N]) -> OneToManySegues<N> {
         if let last = lhs.segues.last {
-            let segues = lhs.segues.filter { $0.out == last.out }
+            let segues = lhs.segues.filter { $0.in == last.in }
             return OneToManySegues(segues: lhs.segues + segues.flatMap { a in
                 rhs.flatMap {
                     [
-                        Segue(a.out, to: $0),
-                        Segue($0, to: a.out)
+                        Segue(a.in, to: $0),
+                        Segue($0, to: a.in)
                     ]
                 }
             })
@@ -186,7 +186,7 @@ public struct OneToManySegues<N: Node> {
 
     public static func <=> (lhs: Self, rhs: N) -> ManyToOneSegues<N> {
         if let last = lhs.segues.last {
-            let segues = lhs.segues.filter { $0.in == last.in }
+            let segues = lhs.segues.filter { $0.in == last.out }
             return ManyToOneSegues(segues: lhs.segues + segues.flatMap {
                 [
                     Segue($0.out, to: rhs),
@@ -200,7 +200,7 @@ public struct OneToManySegues<N: Node> {
     }
 }
 
-public struct Segue<N: Node>: Hashable {
+public struct Segue<N: Node>: Hashable, CustomDebugStringConvertible {
     let `in`: N
     let out: N
 
@@ -210,6 +210,10 @@ public struct Segue<N: Node>: Hashable {
     public init(_ in: N, to out: N) {
         self.in = `in`
         self.out = out
+    }
+
+    public var debugDescription: String {
+        return "\(self.in) => \(out)"
     }
 }
 
@@ -236,25 +240,50 @@ public enum SegueTrait<N: Node>: Hashable {
 
 /// Operations are returned by the graph's `edit(segue:)` method and mutate one or multiple segues.
 public struct SegueTraitOperation<N: Node> {
+    let graph: NavigationGraph<N>
     let segues: [Segue<N>]
 
     /// Adds a new trait to the selected segue/segues
     @discardableResult public func add(trait: SegueTrait<N>) -> Self {
-        .init(segues: segues)
+        for segue in segues {
+            if graph.traits[segue] == nil {
+                graph.traits[segue] = Set()
+            }
+            graph.traits[segue]!.insert(trait)
+        }
+        return .init(graph: graph, segues: segues)
     }
 
     /// Removes a trait from the selected segue/segues. If the trait is not present, the operation *silently* fails.
     @discardableResult public func remove(trait: SegueTrait<N>) -> Self {
-        .init(segues: segues)
+        for segue in segues {
+            if graph.traits[segue] == nil {
+                continue
+            }
+            graph.traits[segue]!.remove(trait)
+            if graph.traits[segue]!.isEmpty {
+                graph.traits.removeValue(forKey: segue)
+            }
+        }
+        return .init(graph: graph, segues: segues)
     }
 
     /// Clears all the traits from the selected segue/segues. If the segues have no traits, the operation *silently* fails.
     @discardableResult public func clear() -> Self {
-        .init(segues: segues)
+        for segue in segues {
+            graph.traits.removeValue(forKey: segue)
+        }
+        return .init(graph: graph, segues: segues)
     }
 
     /// Filters the traits on the selected set of segues.
     @discardableResult public func filter(_ isIncluded: (SegueTrait<N>) -> Bool) -> Self {
-        .init(segues: segues)
+        for segue in segues {
+            if graph.traits[segue] == nil {
+                continue
+            }
+            graph.traits[segue] = graph.traits[segue]!.filter(isIncluded)
+        }
+        return .init(graph: graph, segues: segues)
     }
 }
