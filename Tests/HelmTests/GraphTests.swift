@@ -95,6 +95,10 @@ final class GraphTests: XCTestCase {
         unsetenv("HELM_DISABLE_ASSERTIONS")
     }
     
+    func testAutoForward() {
+        
+    }
+    
     func testGoForward() {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)

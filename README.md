@@ -14,12 +14,21 @@
 Helm is a declarative, graph-based navigation library for SwiftUI. It's like a router on steroids that fully describes all the navigation flows in an app and can handle complex overlapping UI, modals, deeplinking and much more.
 
 ## Index
+* [Features](#features)
 * [Overview](#overview)
 * [Error handling](#error-handling)
 * [Deeplinking](#deeplinking)
 * [Snapshot testing](#snapshot-testing)
 * [Examples](#example)
 * [License](#license)
+
+## Features
+✅ declarative
+✅ lightweight, expressive and easy to use
+✅ deeplinking and snapshot testing ready
+✅ built for all Apple platforms that support SwiftUI
+✅ zero 3rd party dependencies 
+✅ fully tested
 
 ## Overview
 
