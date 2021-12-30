@@ -20,11 +20,10 @@ public extension NavigationGraph {
     /// - seealso: `present(node:)`
     func present(flow: Flow<N>) {}
 
-    /// Looks at the most recently presented node and navigates any connected segue that has the `.next` trait, if any.
-    /// Used mostly to define the next setp in chained navigation like tutorials and onboarding screens.
+    /// Looks at the most recently presented node and navigates any connected egress segue to a node that is not yet presented. Note that there might be multiple such nodes, or none, in which case `forward()` does nothing.
     func forward() {}
 
-    /// Looks at the most recently presented node and navigates using the segue that points to the previously presented node. Note that there might be no such a segue, in which case back does nothing.
+    /// Looks at the most recently presented node and navigates using the segue that points to the previously presented node. Note that there might be no such a segue, in which case `back()` does nothing.
     func back() {}
 
     /// Attempts to reach a node navigating using only reverse segues relative to the ones already presented.

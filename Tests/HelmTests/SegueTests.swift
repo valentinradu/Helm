@@ -92,8 +92,8 @@ final class SegueTests: XCTestCase {
         graph
             .edit(segue: .a => .b)
             .add(trait: .modal)
-            .add(trait: .next)
-            .filter { $0 == .next }
-        XCTAssertEqual(graph.traits, [Segue(.a, to: .b): [.next]])
+            .add(trait: .disabled)
+            .filter { $0 == .disabled }
+        XCTAssertEqual(graph.traits, [Segue(.a, to: .b): [.disabled]])
     }
 }

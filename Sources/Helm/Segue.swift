@@ -216,12 +216,11 @@ public struct Segue<N: Node>: Hashable {
 /// Segue traits define the navigation rules between nodes.
 /// Each segue can have multiple rules, editable at any time in the app's lifecycle.
 public enum SegueTrait<N: Node>: Hashable {
-    /// Used to determine the next node when calling the relative `.forward()` command.
-    /// Only one segue can have the `.next` trait between siblings.
-    case next
+    // Automatically activates the segue once its in node has been presented.
+    case auto
     /// Forwards the navigation to another flow.
     /// The new flow has to be reachable. In other words, the first node in the flow has to be already presented.
-    case redirect(flow: Flow<N>)
+    case redirect(to: Flow<N>)
     /// Disables the segue. For all purposes, the segue behaves as it was never created.
     case disabled
     /// Presents the segue's out node by overlapping it with its siblings instead of replacing them.

@@ -93,15 +93,11 @@ extension NavigationGraph where N == KeyScreen {
         // these are available only when the user is logged in
         graph
             .edit(segue: .splash => [.onboarding, .dashboard])
-            .add(trait: .redirect(flow: Flow(segue: .splash => .gatekeeper)))
+            .add(trait: .redirect(to: Flow(segue: .splash => .gatekeeper)))
         // the compose screen is a modal
         graph
             .edit(segue: .dashboard => .compose)
             .add(trait: .modal)
-        // the onboarding screens can be navigating in a relative way using `.forward()` commands
-        graph
-            .edit(segue: .onboardingUsername => .onboardingTutorial => .onboardingPrivacyPolicy => .dashboard)
-            .add(trait: .next)
 
         return graph
     }()

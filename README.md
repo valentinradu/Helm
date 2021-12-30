@@ -23,7 +23,7 @@ Helm is a declarative, graph-based navigation library for SwiftUI. It's like a r
 
 ## Overview
 
-Helm is a declarative library, which means you have to first construct the underlying navigation graph with its nodes, edges and rules, and only then, you can harness its power in SwiftUI.
+Helm has a declarative approach, which means you have to first construct the underlying navigation graph with its nodes, edges and rules, and only then, you can harness its power in SwiftUI.
 
 ### Define the navigation graph
 
@@ -43,6 +43,9 @@ enum Sections: Node {
     
     // once the user is logged in, the dashboard is available
     case dashboard
+    // which has 2 sections
+    case news
+    case library
     
     // also, let's say that you can write new articles once you can access the dashboard
     case compose
@@ -62,6 +65,7 @@ Just a bunch of sections in our app, but with no navigation rules. In Helm, navi
 We have to first define the segues. For that, we will use a `Flow` which is just an ordered collection of unique segues. Normally, we'd need to create and add each segue manually:
 
 ```swift
+// don't do this, use segue operators
 let flow = Flow<Sections>(segue: Segue(.splash, to: .gatekeeper))
     .add(segue: Segue(.splash, to: .dashboard))
     .add(segue: Segue(.gatekeeper, to: .login))
@@ -80,19 +84,46 @@ Using the operators, the full flow definition becomes:
 // you can navigate from the .splash screen to the .gatekeeper or directly to the .dashboard
 let flow = Flow<Sections>(segue: .splash => [.gatekeeper, .dashboard])
     // the gatekeeper contains three sub-sections
-    .add(segue: .gatekeeper => [.login, .register, .forgotPass])
+    .add(segue: .gatekeeper => .login)
     // from each of the gatekeeper sub-section you can navigate to the others
     .add(segue: .login <=> .register <=> .forgotPass <=> .login)
     // both from .login and .register you can reach the dashboard
     // if the login or the register operation succeeds  
     .add(segue: [.login, .register] => .dashboard)
-    // once in the dashboard, you can go to the article section and back
+    // once in the dashboard, we can visit either the .news or the .library section
+    .add(segue: .dashboard => [.news, .library]) 
+    // also, you can go to the article section and back
     .add(segue: .dashboard <=> .compose)
 ```
 
-And in five lines of code (excluding the comments), we defined our navigation almost entirely. This corresponds to:
+We defined our navigation almost entirely. This corresponds to:
 
 <p align="center">
   <img src="flow-with-segues.svg" />
 </p>
 
+Lastly, we create the navigation graph and add the segues traits.
+First, since both `.gatekeeper` and `.dashboard` are container nodes and can't be presented by themselves, we shall automatically forward all navigation that passes through them to `.login` and `.news` respectively using the `.auto` segue trait.
+Second, we need to let Helm know that `.compose` is a modal and that its siblings, `.library` and `.news` should not be deactivated when presenting it. We'll use the `.modal` segue trait to do so.
+Third, since the user starts unauthenticated, we redirect all attempts to reach the `.dashboard` from the `.splash` to the `.gatekeeper` using the `.redirect(to:)` segue trait. This should change once the user becomes authenticated.
+
+```swift
+let graph = NavigationGraph(flow: flow)
+// we add the `.auto` trait
+graph.edit(segue: .gatekeeper => .login)
+    .add(trait: .auto)
+graph.edit(segue: .dashboard => .news)
+    .add(trait: .auto)
+// we mark .compose as a modal
+graph.edit(segue: .dashboard => .compose)
+    .add(trait: .modal)
+// and redirect access to the .dashboard from .splash to the .gatekeeper
+graph.edit(segue: .splash => .dashboard)
+    .add(trait: .redirect(to: Flow(segue: .splash => .gatekeeper)))
+```
+
+Resulting our final navigation graph.
+
+<p align="center">
+  <img src="flow-with-segues-and-traits.svg" />
+</p>

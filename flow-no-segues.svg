@@ -10,13 +10,21 @@
         <mask id="mask-4" maskContentUnits="userSpaceOnUse" maskUnits="objectBoundingBox" x="0" y="0" width="42" height="42" fill="white">
             <use xlink:href="#path-3"></use>
         </mask>
-        <rect id="path-5" x="472" y="143" width="42" height="42" rx="6"></rect>
+        <rect id="path-5" x="472" y="210" width="42" height="42" rx="6"></rect>
         <mask id="mask-6" maskContentUnits="userSpaceOnUse" maskUnits="objectBoundingBox" x="0" y="0" width="42" height="42" fill="white">
             <use xlink:href="#path-5"></use>
         </mask>
-        <rect id="path-7" x="238" y="210" width="42" height="42" rx="6"></rect>
+        <rect id="path-7" x="472" y="129" width="42" height="42" rx="6"></rect>
         <mask id="mask-8" maskContentUnits="userSpaceOnUse" maskUnits="objectBoundingBox" x="0" y="0" width="42" height="42" fill="white">
             <use xlink:href="#path-7"></use>
+        </mask>
+        <rect id="path-9" x="472" y="48" width="42" height="42" rx="6"></rect>
+        <mask id="mask-10" maskContentUnits="userSpaceOnUse" maskUnits="objectBoundingBox" x="0" y="0" width="42" height="42" fill="white">
+            <use xlink:href="#path-9"></use>
+        </mask>
+        <rect id="path-11" x="238" y="210" width="42" height="42" rx="6"></rect>
+        <mask id="mask-12" maskContentUnits="userSpaceOnUse" maskUnits="objectBoundingBox" x="0" y="0" width="42" height="42" fill="white">
+            <use xlink:href="#path-11"></use>
         </mask>
     </defs>
     <g id="iPhone-8" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
@@ -30,13 +38,19 @@
             <tspan x="346.972656" y="203">.dashboard</tspan>
         </text>
         <text id=".compose" font-family="Helvetica" font-size="14" font-weight="normal" fill="#8C8C8C">
-            <tspan x="462.151855" y="203">.compose</tspan>
+            <tspan x="462.151855" y="270">.compose</tspan>
         </text>
-        <text id=".login" font-family="Helvetica" font-size="14" font-weight="normal" fill="#8C8C8C">
-            <tspan x="243.265625" y="107">.login</tspan>
+        <text id=".news" font-family="Helvetica" font-size="14" font-weight="normal" fill="#8C8C8C">
+            <tspan x="474.213867" y="189">.news</tspan>
+        </text>
+        <text id=".library" font-family="Helvetica" font-size="14" font-weight="normal" fill="#8C8C8C">
+            <tspan x="471.496582" y="108">.library</tspan>
         </text>
         <text id=".register" font-family="Helvetica" font-size="14" font-weight="normal" fill="#8C8C8C">
-            <tspan x="235.213867" y="188">.register</tspan>
+            <tspan x="234.713867" y="107">.register</tspan>
+        </text>
+        <text id=".login" font-family="Helvetica" font-size="14" font-weight="normal" fill="#8C8C8C">
+            <tspan x="243.765625" y="188">.login</tspan>
         </text>
         <text id=".forgotPass" font-family="Helvetica" font-size="14" font-weight="normal" fill="#8C8C8C">
             <tspan x="224.593262" y="269">.forgotPass</tspan>
@@ -47,6 +61,8 @@
         <use id="Rectangle" stroke="#8CCDFF" mask="url(#mask-2)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-1"></use>
         <use id="Rectangle-Copy-4" stroke="#8CCDFF" mask="url(#mask-4)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-3"></use>
         <use id="Rectangle-Copy-6" stroke="#8CCDFF" mask="url(#mask-6)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-5"></use>
-        <use id="Rectangle-Copy-5" stroke="#8CCDFF" mask="url(#mask-8)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-7"></use>
+        <use id="Rectangle-Copy-12" stroke="#8CCDFF" mask="url(#mask-8)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-7"></use>
+        <use id="Rectangle-Copy-11" stroke="#8CCDFF" mask="url(#mask-10)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-9"></use>
+        <use id="Rectangle-Copy-5" stroke="#8CCDFF" mask="url(#mask-12)" stroke-width="4" stroke-dasharray="3" xlink:href="#path-11"></use>
     </g>
 </svg>

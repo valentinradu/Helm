@@ -98,8 +98,6 @@ final class GraphTests: XCTestCase {
     func testGoForward() {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
-        graph.edit(segue: .a => [.b, .c])
-            .add(trait: .next)
         graph.forward()
         
         XCTAssertTrue(graph.isPresented(.b))
@@ -109,10 +107,36 @@ final class GraphTests: XCTestCase {
         setenv("HELM_DISABLE_ASSERTIONS", "1", 1)
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
+        graph.present(node: .b)
         graph.forward()
         
-        XCTAssertEqual(graph.activeFlow.segues, [])
+        XCTAssertEqual(graph.activeFlow.segues, [Segue(.a, to: .b)])
         unsetenv("HELM_DISABLE_ASSERTIONS")
+    }
+    
+    func testGoForwardMultiple() {
+        setenv("HELM_DISABLE_ASSERTIONS", "1", 1)
+        let flow = Flow<TestNode>(segue: .a => .b => [.c, .d])
+        let graph = NavigationGraph(flow: flow)
+        graph.present(node: .b)
+        graph.forward()
+        
+        XCTAssertEqual(graph.activeFlow.segues, [Segue(.a, to: .b)])
+        unsetenv("HELM_DISABLE_ASSERTIONS")
+    }
+    
+    func testGoForwardMultipleDisabled() {
+        let flow = Flow<TestNode>(segue: .a => .b => [.c, .d])
+        let graph = NavigationGraph(flow: flow)
+        graph.edit(segue: .b => .d)
+            .add(trait: .disabled)
+        graph.present(node: .b)
+        graph.forward()
+        
+        XCTAssertEqual(graph.activeFlow.segues, [
+            Segue(.a, to: .b),
+            Segue(.b, to: .c),
+        ])
     }
     
     func testGoBack() {
