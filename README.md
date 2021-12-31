@@ -206,7 +206,7 @@ struct DashboardView: View {
 
 ## Error handling
 
-There are no user-facing errors in Helm. All the possible errors originate from misconfigurations or unexpected usage (i.e. trying to follow a disabled segue). In Helm, such errors are logged in production and asserted in development. If for some reason you want to disable assertions in development as well (although, I'd strongly recommend against it, since it hinders testing), you can set `HELM_DISABLE_ASSERTIONS` environment variable to "1".
+There are no user-facing errors in Helm. All the possible errors originate from misconfigurations or unexpected usage (i.e. trying to follow a disabled segue). In Helm, such errors are logged in production and asserted in development. If for some reason you want to disable assertions in development as well (although, I'd strongly recommend against it, since it hinders testing), you can set `HELM_DISABLE_ASSERTIONS` compilation condition.
 
 ## Deeplinking
 

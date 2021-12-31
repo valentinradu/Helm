@@ -7,7 +7,7 @@ let package = Package(
     name: "Helm",
     platforms: [
         .iOS(.v14), .macOS(.v11), .tvOS(.v9),
-        .macCatalyst(.v13), .watchOS(.v2), .driverKit(.v19),
+        .macCatalyst(.v13), .watchOS(.v2), .driverKit(.v19)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -33,5 +33,6 @@ let package = Package(
             dependencies: ["Helm"]),
         .testTarget(
             name: "HelmTests",
-            dependencies: ["Helm"])
+            dependencies: ["Helm"],
+            swiftSettings: [.define("HELM_DISABLE_ASSERTIONS")])
     ])
