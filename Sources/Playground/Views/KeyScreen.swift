@@ -110,16 +110,16 @@ extension NavigationGraph where N == KeyScreen {
 
 struct Fragment<V: View>: View {
     @EnvironmentObject var nav: NavigationGraph<KeyScreen>
-    private let screen: KeyScreen
-    private let builder: () -> V
+    private let _screen: KeyScreen
+    private let _builder: () -> V
     init(_ screen: KeyScreen, @ViewBuilder builder: @escaping () -> V) {
-        self.screen = screen
-        self.builder = builder
+        self._screen = screen
+        self._builder = builder
     }
 
     var body: some View {
-        if nav.isPresented(screen) {
-            builder()
+        if nav.isPresented(_screen) {
+            _builder()
         }
     }
 }

@@ -26,7 +26,7 @@ extension View {
 }
 
 struct RootView: View {
-    @Namespace private var namespace
+    @Namespace private var _namespace
 
     var body: some View {
         ZStack {
@@ -42,7 +42,7 @@ struct RootView: View {
         }
         .environmentObject(NavigationGraph.main)
         .environmentObject(AppState.main)
-        .namespace(namespace)
+        .namespace(_namespace)
     }
 }
 

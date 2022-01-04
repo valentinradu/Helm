@@ -229,6 +229,10 @@ public struct Segue<N: Node>: Hashable, CustomDebugStringConvertible {
     public var debugDescription: String {
         return "\(self.in) => \(out)"
     }
+    
+    public var counterpart: Segue<N> {
+        Segue(out, to: `in`)
+    }
 }
 
 /// Segue traits define the navigation rules between nodes.

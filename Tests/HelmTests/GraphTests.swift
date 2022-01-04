@@ -162,7 +162,7 @@ final class GraphTests: XCTestCase {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
         try graph.present(node: .b)
-        try graph.back()
+        try graph.dismiss()
         
         XCTAssertTrue(graph.isPresented(.a))
         XCTAssertFalse(graph.isPresented(.b))

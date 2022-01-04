@@ -9,22 +9,22 @@ import Helm
 import SwiftUI
 
 struct ComposeView: View {
-    @State private var content: String = ""
-    @EnvironmentObject private var nav: NavigationGraph<KeyScreen>
+    @State private var _content: String = ""
+    @EnvironmentObject private var _nav: NavigationGraph<KeyScreen>
 
     var body: some View {
         VStack(spacing: 60) {
             HStack {
                 Spacer()
-                Button(action: { try! nav.dismiss() }) {
+                Button(action: { try! _nav.dismiss() }) {
                     Image(systemName: "xmark")
                 }
             }
             VStack(spacing: 20) {
                 Text("Write your story")
                     .font(.headline)
-                TextEditor(text: $content)
-                Button(action: { try! nav.dismiss() }) {
+                TextEditor(text: $_content)
+                Button(action: { try! _nav.dismiss() }) {
                     Text("Publish")
                 }
                 .buttonStyle(FillButton())

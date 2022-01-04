@@ -14,6 +14,12 @@ public enum HelmError<N: Node>: Error {
     case forwardAmbigous(node: N, segues: Set<Segue<N>>)
     case missingSegues(value: Set<Segue<N>>)
     case noContext(from: N)
+    case multiInletFlow(from: Set<N>)
+    case noInletFlow
+    case circularRedirection(segue: Segue<N>)
+    case multiAuto(node: N, segues: Set<Segue<N>>)
+    case cantFindaSegueCounterpart(segue: Segue<N>)
+    case nothingPresented
 }
 
 extension HelmError: CustomDebugStringConvertible {
@@ -31,6 +37,18 @@ extension HelmError: CustomDebugStringConvertible {
             return "Multiple segues (\(segues) points forward from the last presented node (\(node))"
         case let .noContext(from):
             return "Trying to dismiss a context from \(from) when the none of the presented nodes have a .modal or .context segue trait."
+        case let .multiInletFlow(from):
+            return "This flow has multiple inlets: \(from)"
+        case .noInletFlow:
+            return "This flow has no inlets. This can happen when the flow is empty or when nodes reference each other in a circular manner."
+        case let .circularRedirection(segue):
+            return "Circular redirection detected. The redirection flow contains the segue that triggers it: \(segue)"
+        case let .multiAuto(node, segues):
+            return "Multiple auto segues originate from \(node): \(segues)."
+        case let .cantFindaSegueCounterpart(node):
+            return "Can't find a segue counterpart for \(node) and go back."
+        case .nothingPresented:
+            return "The navigation graph has no presented nodes."
         }
     }
 }

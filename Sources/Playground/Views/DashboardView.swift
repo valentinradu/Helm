@@ -9,14 +9,14 @@ import Helm
 import SwiftUI
 
 struct LibraryView: View {
-    @EnvironmentObject private var state: AppState
-    @EnvironmentObject private var nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject private var _state: AppState
+    @EnvironmentObject private var _nav: NavigationGraph<KeyScreen>
 
     var body: some View {
         NavigationView {
-            List(state.articles) {
+            List(_state.articles) {
                 NavigationLink(destination: ArticleView(),
-                               isActive: nav.isPresented(.article)) {
+                               isActive: _nav.isPresented(.article)) {
                     EmptyView()
                 }
                 LibraryItemView(title: $0.title, desc: $0.desc)
@@ -40,11 +40,11 @@ struct LibraryItemView: View {
 }
 
 struct NewsView: View {
-    @EnvironmentObject private var state: AppState
+    @EnvironmentObject private var _state: AppState
 
     var body: some View {
         NavigationView {
-            List(state.news) {
+            List(_state.news) {
                 NewsItemView(title: $0.title, content: $0.content)
             }
         }
@@ -85,18 +85,18 @@ struct ArticleView: View {
 }
 
 struct DashboardView: View {
-    @State private var selection: Int = 0
-    @EnvironmentObject private var nav: NavigationGraph<KeyScreen>
+    @State private var _selection: Int = 0
+    @EnvironmentObject private var _nav: NavigationGraph<KeyScreen>
 
     var body: some View {
         VStack {
             HStack {
                 Spacer()
-                Button(action: { try! nav.present(node: .compose) }) {
+                Button(action: { try! _nav.present(node: .compose) }) {
                     Image(systemName: "plus.square.on.square")
                 }
             }
-            TabView(selection: $selection) {
+            TabView(selection: $_selection) {
                 LibraryView()
                     .tabItem {
                         Label("Library", systemImage: "book.closed")
@@ -111,12 +111,12 @@ struct DashboardView: View {
                     }
             }
         }
-        .sheet(isPresented: nav.isPresented(.compose)) {
+        .sheet(isPresented: _nav.isPresented(.compose)) {
             ComposeView()
         }
-        .onChange(of: selection) {
+        .onChange(of: _selection) {
             let screens: [KeyScreen] = [.library, .news, .settings]
-            try! nav.present(node: screens[$0])
+            try! _nav.present(node: screens[$0])
         }
     }
 }

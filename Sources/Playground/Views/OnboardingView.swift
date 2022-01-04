@@ -9,13 +9,13 @@ import Helm
 import SwiftUI
 
 struct OnboardingUsernameView: View {
-    @EnvironmentObject var nav: NavigationGraph<KeyScreen>
-    @State private var username: String = ""
+    @EnvironmentObject private var _nav: NavigationGraph<KeyScreen>
+    @State private var _username: String = ""
 
     var body: some View {
         VStack(spacing: 60) {
-            TextField("Username", text: $username)
-            Button(action: { try! nav.forward() }) {
+            TextField("Username", text: $_username)
+            Button(action: { try! _nav.forward() }) {
                 HStack {
                     Text("Next")
                     Image(systemName: "arrow.forward.circle")
