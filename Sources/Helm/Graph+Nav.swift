@@ -12,7 +12,17 @@ public extension NavigationGraph {
     /// Activates a node. If the segue that leads to it is not marked as `.cover`, all its the siblings will be deactivated.
     /// The node needs to be reachable (at least one segue must lead to it from the current active nodes)
     /// - parameter node: The node to navigate to
-    func present(node: N) {}
+    func present(node: N) {
+//        guard segues.count > 0 else {
+//            reportError("Failed to present \(node). No segue connects \(node) to the rest of the navigation graph")
+//            return
+//        }
+//
+//        guard segues.count == 1 else {
+//            reportError("Failed to present \(node). The following segues lead to \(node): \(segues). Only ")
+//            return
+//        }
+    }
 
     /// Activates a node flow.
     /// At least one node needs to be reachable (at least one segue must lead to it from the current active nodes)

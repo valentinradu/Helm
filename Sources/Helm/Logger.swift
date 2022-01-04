@@ -10,7 +10,7 @@ import os
 
 let logger = Logger(subsystem: "com.valentinradu.helm", category: "ui")
 
-func reportError(_ message: @autoclosure () -> String = String(),
+func reportError(_ message: @autoclosure () -> String,
                  file: StaticString = #file,
                  line: UInt = #line)
 {

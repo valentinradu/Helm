@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OrderedCollections
 
 /// A node is the atomic unit in a navigation graph. It usually represents a screen or a part of a screen in your app.
 public protocol Node: Hashable {}
@@ -28,12 +29,14 @@ public extension Node {
         return OneToOneSegues(segues: [Segue(lhs, to: rhs)])
     }
 
-    static func => (lhs: Self, rhs: [Self]) -> OneToManySegues<Self> {
-        return OneToManySegues(segues: rhs.map { Segue(lhs, to: $0) })
+    static func => (lhs: Self, rhs: OrderedSet<Self>) -> OneToManySegues<Self> {
+        let set = OrderedSet(rhs.map { Segue(lhs, to: $0) })
+        return OneToManySegues(segues: set)
     }
 
-    static func => (lhs: [Self], rhs: Self) -> ManyToOneSegues<Self> {
-        return ManyToOneSegues(segues: lhs.map { Segue($0, to: rhs) })
+    static func => (lhs: OrderedSet<Self>, rhs: Self) -> ManyToOneSegues<Self> {
+        let set = OrderedSet(lhs.map { Segue($0, to: rhs) })
+        return ManyToOneSegues(segues: set)
     }
 
     static func <=> (lhs: Self, rhs: Self) -> OneToOneSegues<Self> {
@@ -43,41 +46,44 @@ public extension Node {
         ])
     }
 
-    static func <=> (lhs: [Self], rhs: Self) -> ManyToOneSegues<Self> {
-        return ManyToOneSegues(segues: lhs.flatMap {
+    static func <=> (lhs: OrderedSet<Self>, rhs: Self) -> ManyToOneSegues<Self> {
+        let set = OrderedSet(lhs.flatMap {
             [
                 Segue($0, to: rhs),
                 Segue(rhs, to: $0)
             ]
         })
+        return ManyToOneSegues(segues: set)
     }
 
-    static func <=> (lhs: Self, rhs: [Self]) -> OneToManySegues<Self> {
-        return OneToManySegues(segues: rhs.flatMap {
+    static func <=> (lhs: Self, rhs: OrderedSet<Self>) -> OneToManySegues<Self> {
+        let set = OrderedSet(rhs.flatMap {
             [
                 Segue(lhs, to: $0),
                 Segue($0, to: lhs)
             ]
         })
+        return OneToManySegues(segues: set)
     }
 }
 
 /// One-to-one segues allow creating complex relationships between nodes in a graph using the segue connectors.
 public struct OneToOneSegues<N: Node> {
-    let segues: [Segue<N>]
+    let segues: OrderedSet<Segue<N>>
 
     public static func => (lhs: Self, rhs: N) -> Self {
         if let last = lhs.segues.last {
-            return OneToOneSegues(segues: lhs.segues + [Segue(last.out, to: rhs)])
+            let set = lhs.segues.union([Segue(last.out, to: rhs)])
+            return OneToOneSegues(segues: set)
         }
         else {
             return OneToOneSegues(segues: [])
         }
     }
 
-    public static func => (lhs: Self, rhs: [N]) -> OneToManySegues<N> {
+    public static func => (lhs: Self, rhs: OrderedSet<N>) -> OneToManySegues<N> {
         if let last = lhs.segues.last {
-            return OneToManySegues(segues: lhs.segues + rhs.map { Segue(last.out, to: $0) })
+            return OneToManySegues(segues: lhs.segues.union(rhs.map { Segue(last.out, to: $0) }))
         }
         else {
             return OneToManySegues(segues: [])
@@ -86,10 +92,11 @@ public struct OneToOneSegues<N: Node> {
 
     public static func <=> (lhs: Self, rhs: N) -> Self {
         if let last = lhs.segues.last {
-            return OneToOneSegues(segues: lhs.segues + [
+            let set = OrderedSet(lhs.segues + [
                 Segue(last.in, to: rhs),
                 Segue(rhs, to: last.in)
             ])
+            return OneToOneSegues(segues: set)
         }
         else {
             return OneToOneSegues(segues: [])
@@ -98,12 +105,13 @@ public struct OneToOneSegues<N: Node> {
 
     public static func <=> (lhs: Self, rhs: [N]) -> OneToManySegues<N> {
         if let last = lhs.segues.last {
-            return OneToManySegues(segues: lhs.segues + rhs.flatMap {
+            let set = OrderedSet(lhs.segues + rhs.flatMap {
                 [
                     Segue(last.in, to: $0),
                     Segue($0, to: last.in)
                 ]
             })
+            return OneToManySegues(segues: set)
         }
         else {
             return OneToManySegues(segues: [])
@@ -113,12 +121,13 @@ public struct OneToOneSegues<N: Node> {
 
 /// Many-to-one segues allow creating complex relationships between nodes in a graph using the segue connectors.
 public struct ManyToOneSegues<N: Node> {
-    let segues: [Segue<N>]
+    let segues: OrderedSet<Segue<N>>
 
     public static func => (lhs: Self, rhs: N) -> OneToOneSegues<N> {
         if let last = lhs.segues.last {
             let segues = lhs.segues.filter { $0.out == last.out }
-            return OneToOneSegues(segues: lhs.segues + segues.map { Segue($0.out, to: rhs) })
+            let set = OrderedSet(lhs.segues + segues.map { Segue($0.out, to: rhs) })
+            return OneToOneSegues(segues: set)
         }
         else {
             return OneToOneSegues(segues: [])
@@ -128,9 +137,10 @@ public struct ManyToOneSegues<N: Node> {
     public static func => (lhs: Self, rhs: [N]) -> OneToManySegues<N> {
         if let last = lhs.segues.last {
             let segues = lhs.segues.filter { $0.out == last.out }
-            return OneToManySegues(segues: lhs.segues + segues.flatMap { a in
+            let set = OrderedSet(lhs.segues + segues.flatMap { a in
                 rhs.map { Segue(a.out, to: $0) }
             })
+            return OneToManySegues(segues: set)
         }
         else {
             return OneToManySegues(segues: [])
@@ -140,12 +150,13 @@ public struct ManyToOneSegues<N: Node> {
     public static func <=> (lhs: Self, rhs: N) -> OneToOneSegues<N> {
         if let last = lhs.segues.last {
             let segues = lhs.segues.filter { $0.in == last.in }
-            return OneToOneSegues(segues: lhs.segues + segues.flatMap {
+            let set = OrderedSet(lhs.segues + segues.flatMap {
                 [
                     Segue($0.in, to: rhs),
                     Segue(rhs, to: $0.in)
                 ]
             })
+            return OneToOneSegues(segues: set)
         }
         else {
             return OneToOneSegues(segues: [])
@@ -155,7 +166,7 @@ public struct ManyToOneSegues<N: Node> {
     public static func <=> (lhs: Self, rhs: [N]) -> OneToManySegues<N> {
         if let last = lhs.segues.last {
             let segues = lhs.segues.filter { $0.in == last.in }
-            return OneToManySegues(segues: lhs.segues + segues.flatMap { a in
+            let set = OrderedSet(lhs.segues + segues.flatMap { a in
                 rhs.flatMap {
                     [
                         Segue(a.in, to: $0),
@@ -163,6 +174,7 @@ public struct ManyToOneSegues<N: Node> {
                     ]
                 }
             })
+            return OneToManySegues(segues: set)
         }
         else {
             return OneToManySegues(segues: [])
@@ -172,12 +184,13 @@ public struct ManyToOneSegues<N: Node> {
 
 /// One-to-many segues allow creating complex relationships between nodes in a graph using the segue connectors.
 public struct OneToManySegues<N: Node> {
-    public let segues: [Segue<N>]
+    public let segues: OrderedSet<Segue<N>>
 
     public static func => (lhs: Self, rhs: N) -> ManyToOneSegues<N> {
         if let last = lhs.segues.last {
             let segues = lhs.segues.filter { $0.in == last.in }
-            return ManyToOneSegues(segues: lhs.segues + segues.map { Segue($0.out, to: rhs) })
+            let set = OrderedSet(lhs.segues + segues.map { Segue($0.out, to: rhs) })
+            return ManyToOneSegues(segues: set)
         }
         else {
             return ManyToOneSegues(segues: [])
@@ -187,12 +200,13 @@ public struct OneToManySegues<N: Node> {
     public static func <=> (lhs: Self, rhs: N) -> ManyToOneSegues<N> {
         if let last = lhs.segues.last {
             let segues = lhs.segues.filter { $0.in == last.out }
-            return ManyToOneSegues(segues: lhs.segues + segues.flatMap {
+            let set = OrderedSet(lhs.segues + segues.flatMap {
                 [
                     Segue($0.out, to: rhs),
                     Segue(rhs, to: $0.out)
                 ]
             })
+            return ManyToOneSegues(segues: set)
         }
         else {
             return ManyToOneSegues(segues: [])
@@ -241,7 +255,7 @@ public enum SegueTrait<N: Node>: Hashable {
 /// Operations are returned by the graph's `edit(segue:)` method and mutate one or multiple segues.
 public struct SegueTraitOperation<N: Node> {
     let graph: NavigationGraph<N>
-    let segues: [Segue<N>]
+    let segues: Set<Segue<N>>
 
     /// Adds a new trait to the selected segue/segues
     @discardableResult public func add(trait: SegueTrait<N>) -> Self {
