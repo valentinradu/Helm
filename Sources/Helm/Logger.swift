@@ -6,18 +6,31 @@
 //
 
 import Foundation
-import os
 
-let logger = Logger(subsystem: "com.valentinradu.helm", category: "ui")
+public enum HelmError<N: Node>: Error {
+    case inwardIsolated(node: N)
+    case inwardAmbiguous(node: N, segues: Set<Segue<N>>)
+    case forwardIsolated(node: N)
+    case forwardAmbigous(node: N, segues: Set<Segue<N>>)
+    case missingSegues(value: Set<Segue<N>>)
+    case noContext(from: N)
+}
 
-func reportError(_ message: @autoclosure () -> String,
-                 file: StaticString = #file,
-                 line: UInt = #line)
-{
-    #if DEBUG && !HELM_DISABLE_ASSERTIONS
-//    assertionFailure(message(), file: file, line: line)
-    #else
-    let messageString = message()
-    logger.fault("\(messageString) at \(file):\(line)")
-    #endif
+extension HelmError: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        switch self {
+        case let .inwardIsolated(node):
+            return "No segue connects \(node) to the rest of the navigation graph"
+        case let .inwardAmbiguous(node, segues):
+            return "Ambiguous inward path detected. All the following segues lead to \(node): \(segues)."
+        case let .missingSegues(segues):
+            return "Trying to edit \(segues) failed because the segues are missing. Check the navigation graph and make sure they are defined."
+        case let .forwardIsolated(node):
+            return "There's no segue that points forward from the last presented node (\(node))"
+        case let .forwardAmbigous(node, segues):
+            return "Multiple segues (\(segues) points forward from the last presented node (\(node))"
+        case let .noContext(from):
+            return "Trying to dismiss a context from \(from) when the none of the presented nodes have a .modal or .context segue trait."
+        }
+    }
 }

@@ -11,56 +11,61 @@ import SwiftUI
 import XCTest
 
 final class GraphTests: XCTestCase {
-    func testEditExistingSegue() {
+    func testEditExistingSegue() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
-        let op = graph.edit(segue: .a => .b)
+        let op = try graph.edit(segue: .a => .b)
         XCTAssertEqual(op.segues, [Segue(.a, to: .b)])
     }
 
     func testEditMissingSegue() {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
-        let op = graph.edit(segue: .b => .c)
-        XCTAssertEqual(op.segues, [])
+        let segue = Segue<TestNode>(.b, to: .c)
+        let error = HelmError<TestNode>.missingSegues(value: [segue])
+            
+        XCTAssertThrowsError(
+            try graph.edit(segue: segue),
+            error.debugDescription
+        )
     }
 
-    func testPresentExclusively() {
+    func testPresentExclusively() throws {
         let flow = Flow<TestNode>(segue: .a => [.b, .c, .d])
             .add(segue: .b => .e)
         let graph = NavigationGraph(flow: flow)
         
-        graph.present(flow: Flow(segue: .b => .e))
+        try graph.present(flow: Flow(segue: .b => .e))
         XCTAssertTrue(graph.isPresented(.b))
         XCTAssertTrue(graph.isPresented(.e))
         XCTAssertFalse(graph.isPresented(.c))
         XCTAssertFalse(graph.isPresented(.d))
         
-        graph.present(node: .c)
+        try graph.present(node: .c)
         XCTAssertFalse(graph.isPresented(.b))
         XCTAssertFalse(graph.isPresented(.e))
         XCTAssertTrue(graph.isPresented(.c))
         XCTAssertFalse(graph.isPresented(.d))
     }
     
-    func testPresentInclusively() {
+    func testPresentInclusively() throws {
         let flow = Flow<TestNode>(segue: .a => [.b, .c, .d])
             .add(segue: .b => .e)
         let graph = NavigationGraph(flow: flow)
         
-        graph.edit(segue: .a => .b)
+        try graph.edit(segue: .a => .b)
             .add(trait: .modal)
-        graph.edit(segue: .a => .c)
+        try graph.edit(segue: .a => .c)
             .add(trait: .cover)
         
-        graph.present(node: .d)
-        graph.present(flow: Flow(segue: .b => .e))
+        try graph.present(node: .d)
+        try graph.present(flow: Flow(segue: .b => .e))
         XCTAssertTrue(graph.isPresented(.b))
         XCTAssertTrue(graph.isPresented(.e))
         XCTAssertFalse(graph.isPresented(.c))
         XCTAssertTrue(graph.isPresented(.d))
         
-        graph.present(node: .c)
+        try graph.present(node: .c)
         XCTAssertTrue(graph.isPresented(.b))
         XCTAssertTrue(graph.isPresented(.e))
         XCTAssertTrue(graph.isPresented(.c))
@@ -70,116 +75,135 @@ final class GraphTests: XCTestCase {
     func testUnreachablePresentedNode() {
         let flow = Flow<TestNode>(segue: .a => .b => .c)
         let graph = NavigationGraph(flow: flow)
+        let error = HelmError<TestNode>.inwardIsolated(node: .c)
         
-        graph.present(node: .c)
-        XCTAssertTrue(graph.isPresented(.a))
-        XCTAssertFalse(graph.isPresented(.b))
-        XCTAssertFalse(graph.isPresented(.c))
+        XCTAssertThrowsError(
+            try graph.present(node: .c),
+            error.debugDescription
+        )
     }
     
     func testUnreachablePresentedFlow() {
         let flow = Flow<TestNode>(segue: .a => .b => .c => .d)
         let graph = NavigationGraph(flow: flow)
+        let error = HelmError<TestNode>.inwardIsolated(node: .c)
         
-        graph.present(node: .c)
-        XCTAssertTrue(graph.isPresented(.a))
-        XCTAssertFalse(graph.isPresented(.b))
-        XCTAssertFalse(graph.isPresented(.c))
+        XCTAssertThrowsError(
+            try graph.present(node: .c),
+            error.debugDescription
+        )
     }
     
-    func testAutoForward() {
+    func testAutoForward() throws {
         let flow = Flow<TestNode>(segue: .a => [.b, .c])
         let graph = NavigationGraph(flow: flow)
-        graph.edit(segue: .a => .b)
+        try graph.edit(segue: .a => .b)
             .add(trait: .redirect(to: Flow(segue: .a => .c)))
         
-        graph.present(node: .b)
+        try graph.present(node: .b)
         XCTAssertTrue(graph.isPresented(.a))
         XCTAssertFalse(graph.isPresented(.b))
         XCTAssertTrue(graph.isPresented(.c))
     }
     
-    func testGoForward() {
+    func testGoForward() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
-        graph.forward()
+        try graph.forward()
         
         XCTAssertTrue(graph.isPresented(.b))
     }
     
-    func testGoForwardMissing() {
+    func testGoForwardMissing() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
-        graph.present(node: .b)
-        graph.forward()
+        let error = HelmError<TestNode>.forwardIsolated(node: .b)
+        try graph.present(node: .b)
         
-        XCTAssertEqual(graph.activeFlow.segues, [Segue(.a, to: .b)])
+        XCTAssertThrowsError(
+            try graph.forward(),
+            error.debugDescription
+        )
     }
     
-    func testGoForwardMultiple() {
+    func testGoForwardMultiple() throws {
         let flow = Flow<TestNode>(segue: .a => .b => [.c, .d])
         let graph = NavigationGraph(flow: flow)
-        graph.present(node: .b)
-        graph.forward()
+        let error = HelmError<TestNode>.forwardAmbigous(
+            node: .b,
+            segues: [
+                Segue(.b, to: .c),
+                Segue(.b, to: .d),
+            ]
+        )
+        try graph.present(node: .b)
         
-        XCTAssertEqual(graph.activeFlow.segues, [Segue(.a, to: .b)])
+        XCTAssertThrowsError(
+            try graph.forward(),
+            error.debugDescription
+        )
     }
     
-    func testGoForwardMultipleDisabled() {
+    func testGoForwardMultipleDisabled() throws {
         let flow = Flow<TestNode>(segue: .a => .b => [.c, .d])
         let graph = NavigationGraph(flow: flow)
-        graph.edit(segue: .b => .d)
+        try graph.edit(segue: .b => .d)
             .add(trait: .disabled)
-        graph.present(node: .b)
-        graph.forward()
+        try graph.present(node: .b)
+        try graph.forward()
         
-        XCTAssertEqual(graph.activeFlow.segues, [
+        XCTAssertEqual(graph.pathFlow.segues, [
             Segue(.a, to: .b),
             Segue(.b, to: .c),
         ])
     }
     
-    func testGoBack() {
+    func testGoBack() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
-        graph.present(node: .b)
-        graph.back()
+        try graph.present(node: .b)
+        try graph.back()
         
         XCTAssertTrue(graph.isPresented(.a))
         XCTAssertFalse(graph.isPresented(.b))
     }
     
-    func testDismissContext() {
+    func testDismissContext() throws {
         let flow = Flow<TestNode>(segue: .a => .b => .c)
         let graph = NavigationGraph(flow: flow)
-        graph.edit(segue: .a => .b)
+        try graph.edit(segue: .a => .b)
             .add(trait: .context)
-        graph.present(flow: Flow(segue: .b => .c))
-        graph.dismiss()
+        try graph.present(flow: Flow(segue: .b => .c))
+        try graph.dismiss()
         
         XCTAssertTrue(graph.isPresented(.a))
         XCTAssertFalse(graph.isPresented(.b))
         XCTAssertFalse(graph.isPresented(.c))
     }
     
-    func testDismissModal() {
+    func testDismissModal() throws {
         let flow = Flow<TestNode>(segue: .a => .b => .c)
         let graph = NavigationGraph(flow: flow)
-        graph.edit(segue: .a => .b)
+        try graph.edit(segue: .a => .b)
             .add(trait: .modal)
-        graph.present(flow: Flow(segue: .b => .c))
-        graph.dismiss()
+        try graph.present(flow: Flow(segue: .b => .c))
+        try graph.dismiss()
         
         XCTAssertTrue(graph.isPresented(.a))
         XCTAssertFalse(graph.isPresented(.b))
         XCTAssertFalse(graph.isPresented(.c))
     }
     
-    func testDismissNoContext() {
+    func testDismissNoContext() throws {
         let flow = Flow<TestNode>(segue: .a => .b => .c)
         let graph = NavigationGraph(flow: flow)
-        graph.present(flow: Flow(segue: .b => .c))
-        graph.dismiss()
+        let error = HelmError<TestNode>.noContext(from: .c)
+        try graph.present(flow: Flow(segue: .b => .c))
+        
+        XCTAssertThrowsError(
+            try graph.dismiss(),
+            error.debugDescription
+        )
         
         XCTAssertTrue(graph.isPresented(.a))
         XCTAssertTrue(graph.isPresented(.b))
@@ -193,10 +217,10 @@ final class GraphTests: XCTestCase {
         XCTAssertTrue(graph.isPresented(.a))
     }
     
-    func testIsPresentedBinding() {
+    func testIsPresentedBinding() throws {
         let flow = Flow<TestNode>(segue: .a => .b => .c)
         let graph = NavigationGraph(flow: flow)
-        graph.present(flow: Flow(segue: .b => .c))
+        try graph.present(flow: Flow(segue: .b => .c))
         
         let binding: Binding<Bool> = graph.isPresented(.c)
         XCTAssertTrue(binding.wrappedValue)

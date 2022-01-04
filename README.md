@@ -206,7 +206,8 @@ struct DashboardView: View {
 
 ## Error handling
 
-There are no user-facing errors in Helm. All the possible errors originate from misconfigurations or unexpected usage (i.e. trying to follow a disabled segue). In Helm, such errors are logged in production and asserted in development. If for some reason you want to disable assertions in development as well (although, I'd strongly recommend against it, since it hinders testing), you can set `HELM_DISABLE_ASSERTIONS` compilation condition.
+There should be no user-facing errors in Helm. All the possible errors originate from misconfigurations or unexpected usage (i.e. trying to follow a disabled segue, trying to present a disconneccted node, etc). All the graph mutating functions in Helm throw. I mostly use them with `try!`, since I belive in failing early: any navigation problem should surface as soon as possible. 
+A more defensive solution would wrap them using a function that would do nothing in production and would assert in development. I don't recommend using `try?` since it possibly hides navigation problems and hinders automated testing. 
 
 ## Deeplinking
 

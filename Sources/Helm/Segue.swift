@@ -240,6 +240,7 @@ public enum SegueTrait<N: Node>: Hashable {
     /// The new flow has to be reachable. In other words, the first node in the flow has to be already presented.
     case redirect(to: Flow<N>)
     /// Disables the segue. For all purposes, the segue behaves as it was never created.
+    /// When disabling a segue that's already presented, the segue is first deactivated.
     case disabled
     /// Presents the segue's out node by overlapping it with its siblings instead of replacing them.
     /// Nodes connected by normal segues are exclusive relative to their siblings.

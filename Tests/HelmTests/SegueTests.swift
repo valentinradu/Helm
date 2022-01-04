@@ -51,10 +51,10 @@ final class SegueTests: XCTestCase {
                        ])
     }
 
-    func testAddTrait() {
+    func testAddTrait() throws {
         let flow = Flow<TestNode>(segue: .a => [.b, .c])
         let graph = NavigationGraph(flow: flow)
-        graph
+        try graph
             .edit(segue: .a => [.b, .c])
             .add(trait: .cover)
             .add(trait: .cover)
@@ -66,30 +66,30 @@ final class SegueTests: XCTestCase {
                        ])
     }
 
-    func testRemoveTrait() {
+    func testRemoveTrait() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
-        graph
+        try graph
             .edit(segue: .a => .b)
             .add(trait: .modal)
             .remove(trait: .modal)
         XCTAssertEqual(graph.traits, [:])
     }
 
-    func testClearTrait() {
+    func testClearTrait() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
-        graph
+        try graph
             .edit(segue: .a => .b)
             .add(trait: .modal)
             .clear()
         XCTAssertEqual(graph.traits, [:])
     }
 
-    func testFilterTrait() {
+    func testFilterTrait() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = NavigationGraph(flow: flow)
-        graph
+        try graph
             .edit(segue: .a => .b)
             .add(trait: .modal)
             .add(trait: .disabled)

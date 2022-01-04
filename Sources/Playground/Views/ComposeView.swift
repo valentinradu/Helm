@@ -16,7 +16,7 @@ struct ComposeView: View {
         VStack(spacing: 60) {
             HStack {
                 Spacer()
-                Button(action: { nav.dismiss() }) {
+                Button(action: { try! nav.dismiss() }) {
                     Image(systemName: "xmark")
                 }
             }
@@ -24,7 +24,7 @@ struct ComposeView: View {
                 Text("Write your story")
                     .font(.headline)
                 TextEditor(text: $content)
-                Button(action: { nav.dismiss() }) {
+                Button(action: { try! nav.dismiss() }) {
                     Text("Publish")
                 }
                 .buttonStyle(FillButton())

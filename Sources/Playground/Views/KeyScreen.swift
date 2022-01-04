@@ -91,13 +91,18 @@ extension NavigationGraph where N == KeyScreen {
         // initial
         // we initially disable the navigation to the dashboard and onboarding;
         // these are available only when the user is logged in
-        graph
-            .edit(segue: .splash => [.onboarding, .dashboard])
-            .add(trait: .redirect(to: Flow(segue: .splash => .gatekeeper)))
-        // the compose screen is a modal
-        graph
-            .edit(segue: .dashboard => .compose)
-            .add(trait: .modal)
+        do {
+            try graph
+                .edit(segue: .splash => [.onboarding, .dashboard])
+                .add(trait: .redirect(to: Flow(segue: .splash => .gatekeeper)))
+            // the compose screen is a modal
+            try graph
+                .edit(segue: .dashboard => .compose)
+                .add(trait: .modal)
+        }
+        catch {
+            assertionFailure(error.localizedDescription)
+        }
 
         return graph
     }()

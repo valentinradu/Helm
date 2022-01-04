@@ -21,16 +21,16 @@ struct LoginView: View {
                 TextField("Password", text: $password)
             }
             VStack(spacing: 30) {
-                Button(action: { nav.present(node: .dashboard) }) {
+                Button(action: { try! nav.present(node: .dashboard) }) {
                     Text("Login")
                 }
                 .buttonStyle(FillButton())
                 Group {
-                    Button(action: { nav.present(node: .register) }) {
+                    Button(action: { try! nav.present(node: .register) }) {
                         Text("Register")
                             .textCase(.uppercase)
                     }
-                    Button(action: { nav.present(node: .forgotPass) }) {
+                    Button(action: { try! nav.present(node: .forgotPass) }) {
                         Text("Forgot password")
                     }
                 }
@@ -57,16 +57,16 @@ struct RegisterView: View {
                 TextField("Password", text: $password)
             }
             VStack(spacing: 30) {
-                Button(action: { nav.present(node: .dashboard) }) {
+                Button(action: { try! nav.present(node: .dashboard) }) {
                     Text("Register")
                 }
                 .buttonStyle(FillButton())
                 Group {
-                    Button(action: { nav.present(node: .login) }) {
+                    Button(action: { try! nav.present(node: .login) }) {
                         Text("Login")
                             .textCase(.uppercase)
                     }
-                    Button(action: { nav.present(node: .forgotPass) }) {
+                    Button(action: { try! nav.present(node: .forgotPass) }) {
                         Text("Forgot password")
                     }
                 }
@@ -87,16 +87,16 @@ struct ForgotPasswordView: View {
                 TextField("Email", text: $email)
             }
             VStack(spacing: 30) {
-                Button(action: { nav.present(node: .dashboard) }) {
+                Button(action: { try! nav.present(node: .dashboard) }) {
                     Text("Send me the email")
                 }
                 .buttonStyle(FillButton())
                 Group {
-                    Button(action: { nav.present(node: .register) }) {
+                    Button(action: { try! nav.present(node: .register) }) {
                         Text("Register")
                             .textCase(.uppercase)
                     }
-                    Button(action: { nav.present(node: .login) }) {
+                    Button(action: { try! nav.present(node: .login) }) {
                         Text("Login")
                     }
                 }

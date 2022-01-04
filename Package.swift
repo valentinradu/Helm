@@ -4,15 +4,6 @@
 import Foundation
 import PackageDescription
 
-func forwardEnvsToSwiftSettings(_ value: String...) -> [SwiftSetting] {
-    value.compactMap {
-        if ProcessInfo.processInfo.environment[$0] != nil {
-            return SwiftSetting.define($0)
-        }
-        return nil
-    }
-}
-
 let package = Package(
     name: "Helm",
     platforms: [
@@ -40,8 +31,7 @@ let package = Package(
             name: "Helm",
             dependencies: [
                 .product(name: "Collections", package: "swift-collections")
-            ],
-            swiftSettings: forwardEnvsToSwiftSettings("HELM_DISABLE_ASSERTIONS")),
+            ]),
         .target(
             name: "Playground",
             dependencies: ["Helm"],

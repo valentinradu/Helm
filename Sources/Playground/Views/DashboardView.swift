@@ -92,7 +92,7 @@ struct DashboardView: View {
         VStack {
             HStack {
                 Spacer()
-                Button(action: { nav.present(node: .compose) }) {
+                Button(action: { try! nav.present(node: .compose) }) {
                     Image(systemName: "plus.square.on.square")
                 }
             }
@@ -116,7 +116,7 @@ struct DashboardView: View {
         }
         .onChange(of: selection) {
             let screens: [KeyScreen] = [.library, .news, .settings]
-            nav.present(node: screens[$0])
+            try! nav.present(node: screens[$0])
         }
     }
 }
