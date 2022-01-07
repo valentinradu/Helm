@@ -7,8 +7,7 @@
 
 import Foundation
 
-public enum HelmError<N: Node>: Error {
-}
+public enum HelmError<N: Node>: Error {}
 
 extension HelmError: LocalizedError {
     public var errorDescription: String? {

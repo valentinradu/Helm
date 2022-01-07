@@ -20,7 +20,7 @@ extension Optional {
             throw error
         }
     }
-    
+
     func unwrap() throws -> Wrapped {
         try unwrapOr(error: OptionalError.failedToUnwrap)
     }
