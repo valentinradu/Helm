@@ -82,6 +82,16 @@ public extension EdgeCollection where Element: DirectedConnectable {
             $0.in == node || $0.out == node
         })
     }
+    
+    // Detect if the graph has cycles
+    var hasCycle: Bool {
+        firstCycle != nil
+    }
+    
+    // Returns the first cycle it encounters, if any.
+    var firstCycle: Set<Element>? {
+        []
+    }
 
     /// Returns all the edges that leave a specific node
     /// - parameter for: The node from which the edges leave
@@ -93,6 +103,30 @@ public extension EdgeCollection where Element: DirectedConnectable {
     /// - parameter for: The node to which the edges arrive
     func ingressEdges(for node: Element.N) -> Set<Element> {
         Set(filter { $0.out == node })
+    }
+    
+    /// Inlets are edges that are unconnected with the graph at their `in` node.
+    /// They can be seen as entry points in a directed graph.
+    var inlets: Set<Element> {
+        let ins = Set(map { $0.in })
+        let outs = Set(map { $0.out})
+        return Set(ins
+            .subtracting(outs)
+            .flatMap {
+                egressEdges(for: $0)
+            })
+    }
+    
+    /// Outlets are edges that are unconnected with the graph at their `out` node.
+    /// They can be seen as exit points in a directed graph.
+    var outlets: Set<Element> {
+        let ins = Set(map { $0.in })
+        let outs = Set(map { $0.out})
+        return Set(outs
+            .subtracting(ins)
+            .flatMap {
+                ingressEdges(for: $0)
+            })
     }
 }
 

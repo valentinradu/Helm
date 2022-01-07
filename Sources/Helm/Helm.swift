@@ -10,19 +10,20 @@ import SwiftUI
 
 /// `Helm` holds all navigation rules between sections in the app, plus the path that leads to the currently presented ones.
 public class Helm<S: Section>: ObservableObject {
-    let rules: DirectedGraph<Segue<S>>
+    let nav: DirectedGraph<Segue<S>>
 
     /// The currently presented sections and the relationship between them.
     @Published public var path: GraphPath<DirectedEdge<S>>
 
     /// Initializes a new Helm instance.
-    /// - parameter rules: A directed graph of segues that defies all the navigation rules between sections in the app.
+    /// - parameter nav: A directed graph of segues that defies all the navigation rules between sections in the app.
     /// - parameter path: The path that leads to the currently presented sections.
-    public init(rules: DirectedGraph<Segue<S>>,
+    public init(nav: DirectedGraph<Segue<S>>,
                 path: GraphPath<DirectedEdge<S>> = []) throws
     {
-        self.rules = rules
+        self.nav = nav
         self.path = path
+        try validate()
     }
 
     /// Presents one or multiple sections. The first section has to be connected by an egress segue from an already presented section. Also, the presented sections need to be all connected to each other in the rules graph.
@@ -65,6 +66,20 @@ public class Helm<S: Section>: ObservableObject {
             catch {
                 assertionFailure(error.localizedDescription)
             }
+        }
+    }
+
+    private func validate() throws {
+        if nav.isEmpty {
+            throw HelmError<S>.emptyNav
+        }
+
+        if nav.inlets.count == 0 {
+            throw HelmError<S>.noNavInlets
+        }
+
+        if let segues = nav.filter({ $0.auto }).firstCycle {
+            throw HelmError<S>.autoCycleDetected(segues: segues)
         }
     }
 }

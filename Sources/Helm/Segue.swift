@@ -10,7 +10,7 @@ import Foundation
 public protocol Section: Node {}
 
 /// Segues are the edges between the navigation graph's sections.
-public struct Segue<S: Section>: DirectedConnectable {
+public struct Segue<S: Section>: DirectedConnectable, Equatable {
     /// The input section
     public let `in`: S
     /// The output section
@@ -40,6 +40,17 @@ public struct Segue<S: Section>: DirectedConnectable {
         self.rule = rule
         self.dismissable = dismissable
         self.auto = auto
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(self.in)
+        hasher.combine(self.out)
+    }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return
+            lhs.in == rhs.in &&
+            lhs.out == rhs.out
     }
 }
 
