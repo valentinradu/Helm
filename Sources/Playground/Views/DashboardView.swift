@@ -92,7 +92,7 @@ struct DashboardView: View {
         VStack {
             HStack {
                 Spacer()
-                Button(action: { try! _nav.present(node: .compose) }) {
+                LargeButton(action: { try! _nav.present(node: .compose) }) {
                     Image(systemName: "plus.square.on.square")
                 }
             }

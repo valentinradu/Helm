@@ -8,41 +8,36 @@
 import Helm
 import SwiftUI
 
-struct NamespaceEnvironmentKey: EnvironmentKey {
-    static var defaultValue: Namespace.ID = Namespace().wrappedValue
-}
-
-extension EnvironmentValues {
-    var namespace: Namespace.ID {
-        get { self[NamespaceEnvironmentKey.self] }
-        set { self[NamespaceEnvironmentKey.self] = newValue }
-    }
-}
-
-extension View {
-    func namespace(_ value: Namespace.ID) -> some View {
-        environment(\.namespace, value)
-    }
-}
-
 struct RootView: View {
-    @Namespace private var _namespace
+    @StateObject private var _nav: NavigationGraph = .main
+    @StateObject private var _state: AppState = .main
 
     var body: some View {
         ZStack {
             Fragment(.splash) {
                 SplashView()
+                    .animation(.linear)
+            }
+            Fragment(.gatekeeper) {
+                GatekeeperView()
+                    .animation(.linear)
             }
             Fragment(.dashboard) {
                 DashboardView()
+                    .animation(.linear)
             }
             Fragment(.onboarding) {
                 OnboardingView()
+                    .animation(.linear)
             }
         }
-        .environmentObject(NavigationGraph.main)
-        .environmentObject(AppState.main)
-        .namespace(_namespace)
+        .environmentObject(_nav)
+        .environmentObject(_state)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
+                try! _nav.present(node: .dashboard)
+            }
+        }
     }
 }
 

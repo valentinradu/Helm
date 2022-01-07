@@ -121,10 +121,10 @@ We defined our navigation almost entirely. This corresponds to:
 Lastly, we create the navigation graph and add the segues traits.
 First, since both `.gatekeeper` and `.dashboard` are container nodes and can't be presented by themselves, we shall automatically forward all navigation that passes through them to `.login` and `.news` respectively using the `.auto` segue trait.
 Second, we need to let Helm know that `.compose` is a modal and that its siblings, `.library` and `.news` should not be deactivated when presenting it. We'll use the `.modal` segue trait to do so.
-Third, since the user starts unauthenticated, we redirect all attempts to reach the `.dashboard` from the `.splash` to the `.gatekeeper` using the `.redirect(to:)` segue trait. This should change once the user becomes authenticated.
+Third, since the user starts unauthenticated, we redirect all attempts to reach the `.dashboard` from the `.splash` to the `.gatekeeper` using the `.redirected(to:)` segue trait. This should change once the user becomes authenticated.
 
 ```swift
-let graph = NavigationGraph(flow: flow)
+let graph = try NavigationGraph(flow: flow)
 // we add the `.auto` trait
 graph.edit(segue: .gatekeeper => .login)
     .add(trait: .auto)

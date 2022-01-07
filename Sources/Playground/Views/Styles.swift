@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Valentin Radu on 27/12/2021.
 //
@@ -14,7 +14,7 @@ struct FillButton: ButtonStyle {
             .padding()
             .background(Color.blue)
             .foregroundColor(.white)
-            .clipShape(Capsule())
+            .cornerRadius(6)
     }
 }
 
@@ -23,8 +23,30 @@ struct BorderButton: ButtonStyle {
         configuration
             .label
             .padding()
-            .border(.blue, width: 2)
             .foregroundColor(.blue)
-            .clipShape(Capsule())
+            .cornerRadius(6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(.blue, lineWidth: 2)
+            )
+    }
+}
+
+struct LargeButton<V: View>: View {
+    private let _action: () -> Void
+    private let _content: () -> V
+    init(action: @escaping () -> Void, @ViewBuilder content: @escaping () -> V) {
+        _action = action
+        _content = content
+    }
+
+    var body: some View {
+        Button(action: _action) {
+            HStack {
+                Spacer()
+                _content()
+                Spacer()
+            }
+        }
     }
 }

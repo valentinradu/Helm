@@ -15,7 +15,7 @@ struct OnboardingUsernameView: View {
     var body: some View {
         VStack(spacing: 60) {
             TextField("Username", text: $_username)
-            Button(action: { try! _nav.forward() }) {
+            LargeButton(action: { try! _nav.forward() }) {
                 HStack {
                     Text("Next")
                     Image(systemName: "arrow.forward.circle")
@@ -31,7 +31,7 @@ struct OnboardingTutorialView: View {
     var body: some View {
         VStack(spacing: 60) {
             Text("Some possible long tutorial")
-            Button(action: { try! nav.forward() }) {
+            LargeButton(action: { try! nav.forward() }) {
                 HStack {
                     Text("Next")
                     Image(systemName: "arrow.forward.circle")
@@ -47,7 +47,7 @@ struct OnboardingTermsView: View {
     var body: some View {
         VStack(spacing: 60) {
             Text("Full terms and conditions")
-            Button(action: { try! nav.forward() }) {
+            LargeButton(action: { try! nav.forward() }) {
                 HStack {
                     Text("Finish")
                     Image(systemName: "checkmark.circle")

@@ -27,7 +27,7 @@ final class SegueTests: XCTestCase {
             .add(segue: .b <=> .c <=> .d)
             .add(segue: .d <=> [.e, .f] <=> .g)
             .add(segue: [.g, .i] <=> .j)
-        
+
         XCTAssertEqual(flow.segues,
                        [
                            Segue(.a, to: .b),
@@ -53,47 +53,47 @@ final class SegueTests: XCTestCase {
 
     func testAddTrait() throws {
         let flow = Flow<TestNode>(segue: .a => [.b, .c])
-        let graph = NavigationGraph(flow: flow)
+        let graph = try NavigationGraph(flow: flow)
         try graph
             .edit(segue: .a => [.b, .c])
-            .add(trait: .cover)
-            .add(trait: .cover)
+            .add(trait: .auto)
+            .add(trait: .auto)
             .add(trait: .context)
         XCTAssertEqual(graph.traits,
                        [
-                           Segue(.a, to: .b): [.cover, .context],
-                           Segue(.a, to: .c): [.cover, .context],
+                           Segue(.a, to: .b): [.auto, .context],
+                           Segue(.a, to: .c): [.auto, .context],
                        ])
     }
 
     func testRemoveTrait() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
-        let graph = NavigationGraph(flow: flow)
+        let graph = try NavigationGraph(flow: flow)
         try graph
             .edit(segue: .a => .b)
-            .add(trait: .modal)
-            .remove(trait: .modal)
+            .add(trait: .context)
+            .remove(trait: .context)
         XCTAssertEqual(graph.traits, [:])
     }
 
     func testClearTrait() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
-        let graph = NavigationGraph(flow: flow)
+        let graph = try NavigationGraph(flow: flow)
         try graph
             .edit(segue: .a => .b)
-            .add(trait: .modal)
+            .add(trait: .context)
             .clear()
         XCTAssertEqual(graph.traits, [:])
     }
 
     func testFilterTrait() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
-        let graph = NavigationGraph(flow: flow)
+        let graph = try NavigationGraph(flow: flow)
         try graph
             .edit(segue: .a => .b)
-            .add(trait: .modal)
-            .add(trait: .disabled)
-            .filter { $0 == .disabled }
-        XCTAssertEqual(graph.traits, [Segue(.a, to: .b): [.disabled]])
+            .add(trait: .context)
+            .add(trait: .auto)
+            .filter { $0 == .auto }
+        XCTAssertEqual(graph.traits, [Segue(.a, to: .b): [.context]])
     }
 }

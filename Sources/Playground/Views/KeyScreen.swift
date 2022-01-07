@@ -84,27 +84,35 @@ extension Flow where N == KeyScreen {
 
 extension NavigationGraph where N == KeyScreen {
     static var main: NavigationGraph<N> = {
-        let graph = NavigationGraph(flow: Flow.main)
-        // some segues require additional fine tuning;
-        // although segue traits are mutable and can be added at any
-        // time, however, we start with some to define the
-        // initial
-        // we initially disable the navigation to the dashboard and onboarding;
-        // these are available only when the user is logged in
         do {
+            let graph = try NavigationGraph(flow: Flow.main)
+            // some segues require additional fine tuning;
+            // although segue traits are mutable and can be added at any
+            // time, however, we start with some to define the
+            // initial
+            // we initially disable the navigation to the dashboard and onboarding;
+            // these are available only when the user is logged in
+
             try graph
                 .edit(segue: .splash => [.onboarding, .dashboard])
-                .add(trait: .redirect(to: Flow(segue: .splash => .gatekeeper)))
+                .add(trait: .redirected(to: Flow(segue: .splash => .gatekeeper)))
+            try graph
+                .edit(segue: .splash => [.onboarding, .dashboard])
+                .add(trait: .redirected(to: Flow(segue: .splash => .gatekeeper)))
+            try graph
+                .edit(segue: .gatekeeper => .login)
+                .add(trait: .auto)
             // the compose screen is a modal
             try graph
                 .edit(segue: .dashboard => .compose)
-                .add(trait: .modal)
+                .add(trait: .context)
+            
+            return graph
         }
         catch {
             assertionFailure(error.localizedDescription)
+            fatalError()
         }
-
-        return graph
     }()
 }
 

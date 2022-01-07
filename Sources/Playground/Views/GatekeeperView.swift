@@ -21,16 +21,16 @@ struct LoginView: View {
                 TextField("Password", text: $password)
             }
             VStack(spacing: 30) {
-                Button(action: { try! nav.present(node: .dashboard) }) {
+                LargeButton(action: { try! nav.present(node: .dashboard) }) {
                     Text("Login")
                 }
                 .buttonStyle(FillButton())
                 Group {
-                    Button(action: { try! nav.present(node: .register) }) {
+                    LargeButton(action: { try! nav.present(node: .register) }) {
                         Text("Register")
                             .textCase(.uppercase)
                     }
-                    Button(action: { try! nav.present(node: .forgotPass) }) {
+                    LargeButton(action: { try! nav.present(node: .forgotPass) }) {
                         Text("Forgot password")
                     }
                 }
@@ -57,16 +57,16 @@ struct RegisterView: View {
                 TextField("Password", text: $password)
             }
             VStack(spacing: 30) {
-                Button(action: { try! nav.present(node: .dashboard) }) {
+                LargeButton(action: { try! nav.present(node: .dashboard) }) {
                     Text("Register")
                 }
                 .buttonStyle(FillButton())
                 Group {
-                    Button(action: { try! nav.present(node: .login) }) {
+                    LargeButton(action: { try! nav.present(node: .login) }) {
                         Text("Login")
                             .textCase(.uppercase)
                     }
-                    Button(action: { try! nav.present(node: .forgotPass) }) {
+                    LargeButton(action: { try! nav.present(node: .forgotPass) }) {
                         Text("Forgot password")
                     }
                 }
@@ -87,16 +87,16 @@ struct ForgotPasswordView: View {
                 TextField("Email", text: $email)
             }
             VStack(spacing: 30) {
-                Button(action: { try! nav.present(node: .dashboard) }) {
+                LargeButton(action: { try! nav.present(node: .dashboard) }) {
                     Text("Send me the email")
                 }
                 .buttonStyle(FillButton())
                 Group {
-                    Button(action: { try! nav.present(node: .register) }) {
+                    LargeButton(action: { try! nav.present(node: .register) }) {
                         Text("Register")
                             .textCase(.uppercase)
                     }
-                    Button(action: { try! nav.present(node: .login) }) {
+                    LargeButton(action: { try! nav.present(node: .login) }) {
                         Text("Login")
                     }
                 }
@@ -108,15 +108,9 @@ struct ForgotPasswordView: View {
 }
 
 struct GatekeeperView: View {
-    @Environment(\.namespace) var namespace
-
     var body: some View {
         VStack(spacing: 0) {
             Image("logo")
-                .resizable()
-                .scaledToFit()
-                .matchedGeometryEffect(id: "logo", in: namespace)
-                .frame(width: 100)
             ZStack {
                 Fragment(.login) {
                     LoginView()
@@ -128,7 +122,7 @@ struct GatekeeperView: View {
                     ForgotPasswordView()
                 }
             }
-            Spacer()
         }
+        .padding(40)
     }
 }
