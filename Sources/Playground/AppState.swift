@@ -24,7 +24,6 @@ class AppState: ObservableObject {
     @Published var articles: [ArticleItem] = []
 }
 
-
 extension AppState {
     static var main: AppState = {
         let state = AppState()

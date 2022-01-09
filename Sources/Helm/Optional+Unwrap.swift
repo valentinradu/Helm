@@ -15,8 +15,7 @@ extension Optional {
     func unwrapOr(error: Error) throws -> Wrapped {
         if let value = self {
             return value
-        }
-        else {
+        } else {
             throw error
         }
     }

@@ -106,10 +106,9 @@ extension NavigationGraph where N == KeyScreen {
             try graph
                 .edit(segue: .dashboard => .compose)
                 .add(trait: .context)
-            
+
             return graph
-        }
-        catch {
+        } catch {
             assertionFailure(error.localizedDescription)
             fatalError()
         }
@@ -121,8 +120,8 @@ struct Fragment<V: View>: View {
     private let _screen: KeyScreen
     private let _builder: () -> V
     init(_ screen: KeyScreen, @ViewBuilder builder: @escaping () -> V) {
-        self._screen = screen
-        self._builder = builder
+        _screen = screen
+        _builder = builder
     }
 
     var body: some View {

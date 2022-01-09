@@ -8,12 +8,29 @@
 import Foundation
 import SwiftUI
 
+private extension DirectedGraph {
+    func presentedSections<S: Section>(for _: GraphPath<DirectedEdge<S>>) -> GraphPath<DirectedEdge<S>> where S == Element.N {
+        []
+    }
+}
+
 /// `Helm` holds all navigation rules between sections in the app, plus the path that leads to the currently presented ones.
 public class Helm<S: Section>: ObservableObject {
-    let nav: DirectedGraph<Segue<S>>
+    /// The graph that describes all the navigation rules in the app.
+    public let nav: DirectedGraph<Segue<S>>
 
     /// The currently presented sections and the relationship between them.
-    @Published public var path: GraphPath<DirectedEdge<S>>
+    public private(set) var path: GraphPath<DirectedEdge<S>> {
+        didSet {
+            presentedSections = nav.presentedSections(for: path)
+        }
+    }
+
+    /// The presented sections in the order they were presented.
+    @Published public private(set) var presentedSections: GraphPath<DirectedEdge<S>>
+
+    /// All the errors triggered by navigating
+    @Published public private(set) var errors: [Error]
 
     /// Initializes a new Helm instance.
     /// - parameter nav: A directed graph of segues that defies all the navigation rules between sections in the app.
@@ -21,30 +38,21 @@ public class Helm<S: Section>: ObservableObject {
     public init(nav: DirectedGraph<Segue<S>>,
                 path: GraphPath<DirectedEdge<S>> = []) throws
     {
+        errors = []
+        presentedSections = nav.presentedSections(for: path)
         self.nav = nav
         self.path = path
         try validate()
     }
 
-    /// Presents one or multiple sections. The first section has to be connected by an egress segue from an already presented section. Also, the presented sections need to be all connected to each other in the rules graph.
-    /// - parameter section: The section(s) to present
-    public func present(_ section: S) throws {}
+    public func present(_ query: SegueQuery<S>? = nil) {}
 
-    /// Dismisses a specific section. This action might also dismiss other sections if they have no other ingress segues but the one originating from this section.
-    /// - parameter section: The section to dismiss
-    public func dimiss(_ section: S) throws {}
-
-    /// Dismisses the last presented section
-    /// - seealso: `dismiss(section:)`
-    public func dimiss() throws {}
-
-    /// All the sections that are curently presented.
-    public var presentedSections: Set<S> { [] }
+    public func dimiss(_ query: SegueQuery<S>? = nil) {}
 
     /// Checks if a section is presented. Shorthand for `presentedSections.contains(section)`
     /// - returns: True if the section is presented.
     public func isPresented(_ section: S) -> Bool {
-        return presentedSections.contains(section)
+        return presentedSections.has(node: section)
     }
 
     /// A special `isPresented(section:)` function that returns a binding.
@@ -55,16 +63,10 @@ public class Helm<S: Section>: ObservableObject {
         return Binding {
             self.isPresented(section)
         } set: {
-            do {
-                if $0 {
-                    try self.present(section)
-                }
-                else {
-                    try self.dimiss(section)
-                }
-            }
-            catch {
-                assertionFailure(error.localizedDescription)
+            if $0 {
+                self.present(.section(section))
+            } else {
+                self.dimiss(.section(section))
             }
         }
     }
