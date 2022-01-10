@@ -15,3 +15,10 @@ public extension DirectedConnectable where N: Section {
         Segue(`in`, to: out, rule: rule, auto: auto)
     }
 }
+
+public extension Segue {
+    /// Gets the edge of a segue.
+    var edge: DirectedEdge<N> {
+        DirectedEdge(in: `in`, out: out)
+    }
+}

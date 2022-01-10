@@ -22,7 +22,7 @@ final class GraphTests: XCTestCase {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = try NavigationGraph(flow: flow)
         let segue = Segue<TestNode>(.b, to: .c)
-        let error = HelmError<TestNode>.missingSegues(value: [segue])
+        let error = HelmError.missingSegues(value: [segue])
 
         XCTAssertThrowsError(
             try graph.edit(segue: segue),
@@ -75,7 +75,7 @@ final class GraphTests: XCTestCase {
     func testUnreachablePresentedNode() throws {
         let flow = Flow<TestNode>(segue: .a => .b => .c)
         let graph = try NavigationGraph(flow: flow)
-        let error = HelmError<TestNode>.inwardIsolated(node: .c)
+        let error = HelmError.inwardIsolated(node: .c)
 
         XCTAssertThrowsError(
             try graph.present(node: .c),
@@ -86,7 +86,7 @@ final class GraphTests: XCTestCase {
     func testUnreachablePresentedFlow() throws {
         let flow = Flow<TestNode>(segue: .a => .b => .c => .d)
         let graph = try NavigationGraph(flow: flow)
-        let error = HelmError<TestNode>.inwardIsolated(node: .c)
+        let error = HelmError.inwardIsolated(node: .c)
 
         XCTAssertThrowsError(
             try graph.present(node: .c),
@@ -117,7 +117,7 @@ final class GraphTests: XCTestCase {
     func testGoForwardMissing() throws {
         let flow = Flow<TestNode>(segue: .a => .b)
         let graph = try NavigationGraph(flow: flow)
-        let error = HelmError<TestNode>.forwardIsolated(node: .b)
+        let error = HelmError.forwardIsolated(node: .b)
         try graph.present(node: .b)
 
         XCTAssertThrowsError(
@@ -129,7 +129,7 @@ final class GraphTests: XCTestCase {
     func testGoForwardMultiple() throws {
         let flow = Flow<TestNode>(segue: .a => .b => [.c, .d])
         let graph = try NavigationGraph(flow: flow)
-        let error = HelmError<TestNode>.forwardAmbigous(
+        let error = HelmError.forwardAmbigous(
             node: .b,
             segues: [
                 Segue(.b, to: .c),
@@ -185,7 +185,7 @@ final class GraphTests: XCTestCase {
     func testDismissNoContext() throws {
         let flow = Flow<TestNode>(segue: .a => .b => .c)
         let graph = try NavigationGraph(flow: flow)
-        let error = HelmError<TestNode>.noContext(from: .c)
+        let error = HelmError.noContext(from: .c)
         try graph.present(flow: Flow(segue: .a => .b => .c))
 
         XCTAssertThrowsError(

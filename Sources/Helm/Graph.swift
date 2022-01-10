@@ -9,7 +9,7 @@ import Collections
 import Foundation
 
 /// A node in the graph
-public protocol Node: Hashable {}
+public protocol Node: Hashable, CustomDebugStringConvertible {}
 
 /// The undirected relationship between two nodes.
 public protocol UndirectedConnectable: Hashable {
@@ -95,9 +95,9 @@ public extension EdgeCollection where Element: DirectedConnectable {
         }
 
         var visited: Set<Element.N> = []
-        var segues: Set<Element> = inlets.count > 0 ? inlets : [first]
+        var segues: OrderedSet<Element> = inlets.count > 0 ? inlets : [first]
         var path: OrderedSet<Element> = []
-        var stack: [(OrderedSet<Element>, Set<Element>)] = []
+        var stack: [(OrderedSet<Element>, OrderedSet<Element>)] = []
 
         while segues.count > 0 {
             let segue = segues.removeFirst()
@@ -134,38 +134,82 @@ public extension EdgeCollection where Element: DirectedConnectable {
 
     /// Returns all the edges that leave a specific node
     /// - parameter for: The node from which the edges leave
-    func egressEdges(for node: Element.N) -> Set<Element> {
-        Set(filter { $0.in == node })
+    func egressEdges(for node: Element.N) -> OrderedSet<Element> {
+        OrderedSet(filter { $0.in == node })
+    }
+
+    /// Returns all the edges that leave a set of nodes
+    /// - parameter for: The node from which the edges leave
+    func egressEdges(for nodes: OrderedSet<Element.N>) -> OrderedSet<Element> {
+        OrderedSet(
+            nodes.flatMap {
+                egressEdges(for: $0)
+            }
+        )
+    }
+
+    /// Returns an unique egress edge from a given node.
+    /// - throws: If multiple segues leave the node.
+    /// - throws: If no segues leave the node.
+    func uniqueEgressEdge(for node: Element.N) throws -> Element {
+        let segues = egressEdges(for: node)
+        guard segues.count > 0 else {
+            throw GraphError.missingEgress(node: node)
+        }
+        guard segues.count == 1 else {
+            throw GraphError.ambiguousEgress(node: node, segues: segues)
+        }
+        return segues.first!
     }
 
     /// Returns all the edges that arrive to a specific node
-    /// - parameter for: The node to which the edges arrive
-    func ingressEdges(for node: Element.N) -> Set<Element> {
-        Set(filter { $0.out == node })
+    /// - parameter for: The destination node
+    func ingressEdges(for node: Element.N) -> OrderedSet<Element> {
+        OrderedSet(filter { $0.out == node })
+    }
+
+    /// Returns all the edges that arrive to a set of nodes
+    /// - parameter for: The destination nodes
+    func ingressEdges(for nodes: OrderedSet<Element.N>) -> OrderedSet<Element> {
+        OrderedSet(
+            nodes.flatMap {
+                ingressEdges(for: $0)
+            }
+        )
+    }
+
+    /// Returns an unique ingress edge towards a given node.
+    /// - throws: If multiple segues lead to the node.
+    /// - throws: If no segues lead to the node.
+    func uniqueIngressEdge(for node: Element.N) throws -> Element {
+        let segues = ingressEdges(for: node)
+        guard segues.count > 0 else {
+            throw GraphError.missingIngress(node: node)
+        }
+        guard segues.count == 1 else {
+            throw GraphError.ambiguousIngress(node: node, segues: segues)
+        }
+        return segues.first!
     }
 
     /// Inlets are edges that are unconnected with the graph at their `in` node.
     /// They can be seen as entry points in a directed graph.
-    var inlets: Set<Element> {
+    var inlets: OrderedSet<Element> {
         let ins = Set(map { $0.in })
         let outs = Set(map { $0.out })
-        return Set(ins
-            .subtracting(outs)
-            .flatMap {
-                egressEdges(for: $0)
-            })
+        return egressEdges(for: OrderedSet(ins.subtracting(outs)))
     }
 
     /// Outlets are edges that are unconnected with the graph at their `out` node.
     /// They can be seen as exit points in a directed graph.
-    var outlets: Set<Element> {
+    var outlets: OrderedSet<Element> {
         let ins = Set(map { $0.in })
         let outs = Set(map { $0.out })
-        return Set(outs
-            .subtracting(ins)
-            .flatMap {
-                ingressEdges(for: $0)
-            })
+        return ingressEdges(for: OrderedSet(outs.subtracting(ins)))
+    }
+
+    var nodes: OrderedSet<Element.N> {
+        OrderedSet(flatMap { [$0.in, $0.out] })
     }
 }
 
@@ -188,8 +232,8 @@ public struct Walker<C: DirectedConnectable> {
 
         let inlets = graph.inlets
         var visited: Set<C.N> = []
-        var segues: Set<C> = inlets.count > 0 ? inlets : [first]
-        var stack: [Set<C>] = []
+        var segues: OrderedSet<C> = inlets.count > 0 ? inlets : [first]
+        var stack: [OrderedSet<C>] = []
 
         while segues.count > 0 {
             let segue = segues.removeFirst()
