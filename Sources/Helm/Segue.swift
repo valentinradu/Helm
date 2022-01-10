@@ -11,27 +11,14 @@ import Foundation
 public protocol Section: Node {}
 
 /// A handler used in segue queries.
-public protocol SegueTag {}
-
-/// A structure used to query the graph for **one**, specific segue.
-/// In some cases the nav graph could return multiple segues (i.e. multiple segues can have the same tag), however these ambiguities are solved at runtime (see docs) and ultimately every query affects one segue.
-public enum SegueQuery<S: Section> {
-    /// Looks for the egress segue of an already presented section towards a given section.
-    /// If there is no such segue, the query fails.
-    /// If multiple sections are presented, the search starts with the last one presented.
-    case section(S)
-    /// Looks for a segue with a specific tag.
-    /// The segue's `in` section must be already presented.
-    /// If multiple segues are found, the one with the most recently presented `in` section is used.
-    case tag(SegueTag)
-}
+public protocol SegueTag: Hashable {}
 
 /// Segues are the edges between the navigation graph's sections.
-public struct Segue<S: Section>: DirectedConnectable, Equatable {
+public struct Segue<N: Section>: DirectedConnectable, Equatable {
     /// The input section
-    public let `in`: S
+    public let `in`: N
     /// The output section
-    public let out: S
+    public let out: N
     /// Segue rules define what happens with the origin section when presenting other.
     /// - seealso: `SegueRule`
     public let rule: SeguePresentationRule
@@ -39,6 +26,8 @@ public struct Segue<S: Section>: DirectedConnectable, Equatable {
     public let dismissable: Bool
     /// An auto segue will automatically fire towards its destination section as soon as the origin section has been presented.
     public let auto: Bool
+    /// A tag identifying the segue.
+    public let tag: AnyHashable?
 
     /// Initializes a new segue.
     /// - parameter in: The input section (origin section)
@@ -46,8 +35,9 @@ public struct Segue<S: Section>: DirectedConnectable, Equatable {
     /// - parameter rule: The rule. Defaults to `.replace`.
     /// - parameter dismissable: A dismissable segue is allowed to return to the origin section.
     /// - parameter auto: Sets the auto firing behaviour. A section can only have one egress auto segue. Defaults to `false`.
-    public init(_ in: S,
-                to out: S,
+    /// - parameter tag: A tag identifying the segue. Defaults to `nil`.
+    public init(_ in: N,
+                to out: N,
                 rule: SeguePresentationRule = .replace,
                 dismissable: Bool = false,
                 auto: Bool = false)
@@ -57,6 +47,22 @@ public struct Segue<S: Section>: DirectedConnectable, Equatable {
         self.rule = rule
         self.dismissable = dismissable
         self.auto = auto
+        tag = nil
+    }
+
+    public init<T: SegueTag>(_ in: N,
+                             to out: N,
+                             rule: SeguePresentationRule = .replace,
+                             dismissable: Bool = false,
+                             auto: Bool = false,
+                             tag: T? = nil)
+    {
+        self.in = `in`
+        self.out = out
+        self.rule = rule
+        self.dismissable = dismissable
+        self.auto = auto
+        self.tag = tag
     }
 
     public func hash(into hasher: inout Hasher) {
@@ -77,4 +83,13 @@ public enum SeguePresentationRule: Hashable {
     case hold
     /// The origin section loses its presented status. Only the destination section will be presented after walking the segue.
     case replace
+}
+
+/// The two ways a segue can be triggered.
+public enum SegueDirection: Hashable {
+    /// Triggers a segue from the `in` node to the `out` node
+    case present
+    /// Triggers a segue from the `out` node to the `in` node
+    /// - note: Some segues may not be dismissable
+    case dismiss
 }

@@ -8,12 +8,12 @@
 import Collections
 import Foundation
 
-public enum HelmError<S: Section>: Error {
+public enum HelmError<N: Section>: Error {
     case emptyNav
     case noNavInlets
-    case autoCycleDetected(segues: OrderedSet<Segue<S>>)
-    case multiAuto(segues: OrderedSet<Segue<S>>)
-    case multiTag(segues: OrderedSet<Segue<S>>, tag: SegueTag)
+    case autoCycleDetected(segues: OrderedSet<Segue<N>>)
+    case multiAuto(segues: OrderedSet<Segue<N>>)
+    case multiTag(segues: OrderedSet<Segue<N>>, tag: AnyHashable)
 }
 
 extension HelmError: LocalizedError {
@@ -28,7 +28,7 @@ extension HelmError: LocalizedError {
         case let .multiAuto(segues):
             return "Ambiguous navigation. Multiple auto segues found: \(segues)."
         case let .multiTag(segues, tag):
-            return "Ambiguous navigation. While multiple segues can have the same tag (\(tag)), they can't have the same in section while doing so: \(segues)."
+            return "Ambiguous navigation. While multiple segues can have the same tag (\(tag)), they can't originate from the same section while doing so: \(segues)."
         }
     }
 }
