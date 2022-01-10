@@ -84,12 +84,3 @@ public enum SeguePresentationRule: Hashable {
     /// The origin section loses its presented status. Only the destination section will be presented after walking the segue.
     case replace
 }
-
-/// The two ways a segue can be triggered.
-public enum SegueDirection: Hashable {
-    /// Triggers a segue from the `in` node to the `out` node
-    case present
-    /// Triggers a segue from the `out` node to the `in` node
-    /// - note: Some segues may not be dismissable
-    case dismiss
-}

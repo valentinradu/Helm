@@ -55,7 +55,7 @@ public class Helm<N: Section>: ObservableObject {
         do {
             if path.isEmpty {
                 let segue = try nav.inlets.uniqueIngressEdge(for: section)
-                try trigger(edge: segue.edge, direction: .present)
+                try present(edge: segue.edge)
             }
             else {
                 let segues = nav
@@ -66,7 +66,7 @@ public class Helm<N: Section>: ObservableObject {
                     throw GraphError.missingEgress(node: section)
                 }
 
-                try trigger(edge: segue.edge, direction: .present)
+                try present(edge: segue.edge)
             }
         }
         catch {
@@ -84,7 +84,7 @@ public class Helm<N: Section>: ObservableObject {
                 throw HelmError.missingTag(name: tag)
             }
 
-            try trigger(edge: segue.edge, direction: .present)
+            try present(edge: segue.edge)
         }
         catch {
             errors.append(error)
@@ -104,12 +104,12 @@ public class Helm<N: Section>: ObservableObject {
                 }
 
                 let segue = segues.first!
-                try trigger(edge: segue.edge, direction: .present)
+                try present(edge: segue.edge)
             }
             else {
                 let section = path.last!.out
                 let segue = try nav.uniqueEgressEdge(for: section)
-                try trigger(edge: segue.edge, direction: .present)
+                try present(edge: segue.edge)
             }
         }
         catch {
@@ -133,7 +133,7 @@ public class Helm<N: Section>: ObservableObject {
             }
 
             let segue = segues.first!
-            try trigger(edge: segue.edge, direction: .dismiss)
+            try dismiss(edge: segue.edge)
         }
         catch {
             errors.append(error)
@@ -149,7 +149,7 @@ public class Helm<N: Section>: ObservableObject {
                 throw HelmError.missingTag(name: tag)
             }
 
-            try trigger(edge: segue.edge, direction: .dismiss)
+            try dismiss(edge: segue.edge)
         }
         catch {
             errors.append(error)
@@ -164,16 +164,24 @@ public class Helm<N: Section>: ObservableObject {
                 throw HelmError.cantDimissEmptyPath
             }
             
-            try trigger(edge: edge, direction: .dismiss)
+            try dismiss(edge: edge)
         }
         catch {
             errors.append(error)
         }
     }
 
-    /// Triggers a segue by its edge and direction.
-    /// If possible, use one of the present or dismiss methods instead.
-    public func trigger(edge _: DirectedEdge<N>, direction _: SegueDirection) throws {
+    /// Triggers a segue by its edge presenting its out node.
+    /// If possible, use one of the higher level present or dismiss methods instead.
+    public func present(edge _: DirectedEdge<N>) throws {
+//        guard presentedSections.nodes.contains(section) else {
+//            throw HelmError.dismissingUnpresented(section: section)
+//        }
+    }
+    
+    /// Triggers a segue by its edge dismissing its out node.
+    /// If possible, use one of the higher level present or dismiss methods instead.
+    public func dismiss(edge _: DirectedEdge<N>) throws {
 //        guard presentedSections.nodes.contains(section) else {
 //            throw HelmError.dismissingUnpresented(section: section)
 //        }
