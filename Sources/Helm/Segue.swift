@@ -11,7 +11,7 @@ import Foundation
 public protocol Section: Node {}
 
 /// A handler used in segue queries.
-public protocol SegueTag: Hashable, CustomDebugStringConvertible {}
+public protocol SegueTag: Hashable {}
 
 /// Segues are the edges between the navigation graph's sections.
 public struct Segue<N: Section>: DirectedConnectable, Equatable {

@@ -10,25 +10,26 @@ import Foundation
 import SwiftUI
 
 private extension DirectedGraph {
-    func presentedSections<N: Section>(for _: GraphPath<DirectedEdge<N>>) -> GraphPath<DirectedEdge<N>> where N == Element.N {
+    func presentedSections<N: Section>(for _: DirectedGraph<DirectedEdge<N>>) -> DirectedGraph<DirectedEdge<N>> where N == Element.N {
         []
     }
 }
 
 /// `Helm` holds all navigation rules between sections in the app, plus the path that leads to the currently presented ones.
 public class Helm<N: Section>: ObservableObject {
+    public typealias S = Segue<N>
     /// The graph that describes all the navigation rules in the app.
-    public let nav: DirectedGraph<Segue<N>>
+    public let nav: DirectedGraph<S>
 
     /// The currently presented sections and the relationship between them.
-    public private(set) var path: GraphPath<DirectedEdge<N>> {
+    public private(set) var path: DirectedGraph<DirectedEdge<N>> {
         didSet {
             presentedSections = nav.presentedSections(for: path)
         }
     }
 
     /// The presented sections in the order they were presented.
-    @Published public private(set) var presentedSections: GraphPath<DirectedEdge<N>>
+    @Published public private(set) var presentedSections: DirectedGraph<DirectedEdge<N>>
 
     /// All the errors triggered by navigating
     @Published public private(set) var errors: [Error]
@@ -36,8 +37,8 @@ public class Helm<N: Section>: ObservableObject {
     /// Initializes a new Helm instance.
     /// - parameter nav: A directed graph of segues that defies all the navigation rules between sections in the app.
     /// - parameter path: The path that leads to the currently presented sections.
-    public init(nav: DirectedGraph<Segue<N>>,
-                path: GraphPath<DirectedEdge<N>> = []) throws
+    public init(nav: DirectedGraph<S>,
+                path: DirectedGraph<DirectedEdge<N>> = []) throws
     {
         errors = []
         presentedSections = nav.presentedSections(for: path)
@@ -55,7 +56,7 @@ public class Helm<N: Section>: ObservableObject {
         do {
             if path.isEmpty {
                 let segue = try nav.inlets.uniqueIngressEdge(for: section)
-                try present(edge: segue.edge)
+                try present(segue: segue)
             }
             else {
                 let segues = nav
@@ -63,10 +64,10 @@ public class Helm<N: Section>: ObservableObject {
                     .ingressEdges(for: section)
 
                 guard let segue = segues.first else {
-                    throw GraphError.missingEgress(node: section)
+                    throw HelmError<S>.missingEgressEdges(from: section)
                 }
 
-                try present(edge: segue.edge)
+                try present(segue: segue)
             }
         }
         catch {
@@ -80,11 +81,15 @@ public class Helm<N: Section>: ObservableObject {
     /// - parameter tag: The tag to look after.
     public func present<T: SegueTag>(tag: T) {
         do {
-            guard let segue = nav.first(where: { $0.tag == AnyHashable(tag) }) else {
-                throw HelmError.missingTag(name: tag)
+            let segues = nav
+                .egressEdges(for: OrderedSet(presentedSections.nodes.reversed()))
+                .filter { $0.tag == AnyHashable(tag) }
+
+            guard segues.count > 0 else {
+                throw HelmError<S>.missingTaggedSegue(name: AnyHashable(tag))
             }
 
-            try present(edge: segue.edge)
+            try present(segue: segues.last!)
         }
         catch {
             errors.append(error)
@@ -100,16 +105,16 @@ public class Helm<N: Section>: ObservableObject {
                 let segues = nav.inlets
 
                 guard segues.count == 1 else {
-                    throw HelmError.ambiguousForwardInlets
+                    throw HelmError<S>.ambiguousForwardInlets
                 }
 
                 let segue = segues.first!
-                try present(edge: segue.edge)
+                try present(segue: segue)
             }
             else {
                 let section = path.last!.out
                 let segue = try nav.uniqueEgressEdge(for: section)
-                try present(edge: segue.edge)
+                try present(segue: segue)
             }
         }
         catch {
@@ -129,11 +134,11 @@ public class Helm<N: Section>: ObservableObject {
                 .filter { $0.dismissable }
 
             guard segues.count > 0 else {
-                throw HelmError.noDismissableSegue(section: section)
+                throw HelmError<S>.sectionMissingDismissableSegue(section)
             }
 
             let segue = segues.first!
-            try dismiss(edge: segue.edge)
+            try dismiss(segue: segue)
         }
         catch {
             errors.append(error)
@@ -146,10 +151,10 @@ public class Helm<N: Section>: ObservableObject {
     public func dismiss<T: SegueTag>(tag: T) {
         do {
             guard let segue = nav.first(where: { $0.tag == AnyHashable(tag) }) else {
-                throw HelmError.missingTag(name: tag)
+                throw HelmError<S>.missingTaggedSegue(name: AnyHashable(tag))
             }
 
-            try dismiss(edge: segue.edge)
+            try dismiss(segue: segue)
         }
         catch {
             errors.append(error)
@@ -160,11 +165,13 @@ public class Helm<N: Section>: ObservableObject {
     /// The operation fails if the section has no dismissable ingress segue.
     public func dismiss() {
         do {
-            guard let edge = path.last else {
-                throw HelmError.cantDimissEmptyPath
+            guard let edge = path.last,
+                  let segue = nav.first(where: { $0.edge == edge })
+            else {
+                throw HelmError<S>.emptyPath
             }
-            
-            try dismiss(edge: edge)
+
+            try dismiss(segue: segue)
         }
         catch {
             errors.append(error)
@@ -173,18 +180,22 @@ public class Helm<N: Section>: ObservableObject {
 
     /// Triggers a segue by its edge presenting its out node.
     /// If possible, use one of the higher level present or dismiss methods instead.
-    public func present(edge _: DirectedEdge<N>) throws {
-//        guard presentedSections.nodes.contains(section) else {
-//            throw HelmError.dismissingUnpresented(section: section)
-//        }
+    public func present(segue: S) throws {
+        guard nav.has(edge: segue) else {
+            throw HelmError.missingSegue(segue)
+        }
+
+        guard presentedSections.has(node: segue.in) else {
+            throw HelmError<S>.sectionNotPresented(segue.in)
+        }
     }
-    
+
     /// Triggers a segue by its edge dismissing its out node.
     /// If possible, use one of the higher level present or dismiss methods instead.
-    public func dismiss(edge _: DirectedEdge<N>) throws {
-//        guard presentedSections.nodes.contains(section) else {
-//            throw HelmError.dismissingUnpresented(section: section)
-//        }
+    public func dismiss(segue: S) throws {
+        guard presentedSections.has(node: segue.in) else {
+            throw HelmError<S>.sectionNotPresented(segue.in)
+        }
     }
 
     /// Checks if a section is presented. Shorthand for `presentedSections.has(node: section)`
@@ -212,15 +223,15 @@ public class Helm<N: Section>: ObservableObject {
 
     private func validate() throws {
         if nav.isEmpty {
-            throw HelmError.emptyNav
+            throw HelmError<S>.empty
         }
 
         if nav.inlets.count == 0 {
-            throw HelmError.noNavInlets
+            throw HelmError<S>.missingInlets
         }
 
-        if let segues = nav.filter({ $0.auto }).firstCycle {
-            throw HelmError.autoCycleDetected(segues: segues)
+        if let segues = OrderedSet(nav.filter({ $0.auto })).firstCycle {
+            throw HelmError.autoCycleDetected(segues)
         }
     }
 }

@@ -9,7 +9,7 @@ import Collections
 import Foundation
 
 /// A node in the graph
-public protocol Node: Hashable, CustomDebugStringConvertible {}
+public protocol Node: Hashable {}
 
 /// The undirected relationship between two nodes.
 public protocol UndirectedConnectable: Hashable {
@@ -89,31 +89,31 @@ public extension EdgeCollection where Element: DirectedConnectable {
     }
 
     // Returns the first cycle it encounters, if any.
-    var firstCycle: GraphPath<Element>? {
+    var firstCycle: OrderedSet<Element>? {
         guard let first = first else {
             return nil
         }
 
         var visited: Set<Element.N> = []
-        var segues: OrderedSet<Element> = inlets.count > 0 ? inlets : [first]
+        var edges: OrderedSet<Element> = inlets.count > 0 ? inlets : [first]
         var path: OrderedSet<Element> = []
         var stack: [(OrderedSet<Element>, OrderedSet<Element>)] = []
 
-        while segues.count > 0 {
-            let segue = segues.removeFirst()
+        while edges.count > 0 {
+            let edge = edges.removeFirst()
 
-            if !visited.contains(segue.out) {
-                let outs = egressEdges(for: segue.out)
+            if !visited.contains(edge.out) {
+                let outs = egressEdges(for: edge.out)
                 if outs.count > 0 {
-                    if segues.count > 0 {
-                        stack.append((path, segues))
+                    if edges.count > 0 {
+                        stack.append((path, edges))
                     }
-                    segues = outs
+                    edges = outs
                 }
-                visited.insert(segue.out)
-                path.append(segue)
+                visited.insert(edge.out)
+                path.append(edge)
             } else {
-                let cycle = path.drop(while: { $0.in != segue.out }) + [segue]
+                let cycle = path.drop(while: { $0.in != edge.out }) + [edge]
                 guard cycle.count > 1 else {
                     assertionFailure("A cycle should have at least 2 edges.")
                     return nil
@@ -121,10 +121,10 @@ public extension EdgeCollection where Element: DirectedConnectable {
                 return OrderedSet(cycle)
             }
 
-            if segues.count == 0 {
-                if let (nextPath, nextSegues) = stack.popLast() {
+            if edges.count == 0 {
+                if let (nextPath, nextEdges) = stack.popLast() {
                     path = nextPath
-                    segues = nextSegues
+                    edges = nextEdges
                 }
             }
         }
@@ -149,17 +149,17 @@ public extension EdgeCollection where Element: DirectedConnectable {
     }
 
     /// Returns an unique egress edge from a given node.
-    /// - throws: If multiple segues leave the node.
-    /// - throws: If no segues leave the node.
+    /// - throws: If multiple edges leave the node.
+    /// - throws: If no edges leave the node.
     func uniqueEgressEdge(for node: Element.N) throws -> Element {
-        let segues = egressEdges(for: node)
-        guard segues.count > 0 else {
-            throw GraphError.missingEgress(node: node)
+        let edges = egressEdges(for: node)
+        guard edges.count > 0 else {
+            throw HelmError<Element>.missingEgressEdges(from: node)
         }
-        guard segues.count == 1 else {
-            throw GraphError.ambiguousEgress(node: node, segues: segues)
+        guard edges.count == 1 else {
+            throw HelmError<Element>.ambiguousEgressEdges(edges, from: node)
         }
-        return segues.first!
+        return edges.first!
     }
 
     /// Returns all the edges that arrive to a specific node
@@ -179,17 +179,17 @@ public extension EdgeCollection where Element: DirectedConnectable {
     }
 
     /// Returns an unique ingress edge towards a given node.
-    /// - throws: If multiple segues lead to the node.
-    /// - throws: If no segues lead to the node.
+    /// - throws: If multiple edges lead to the node.
+    /// - throws: If no edges lead to the node.
     func uniqueIngressEdge(for node: Element.N) throws -> Element {
-        let segues = ingressEdges(for: node)
-        guard segues.count > 0 else {
-            throw GraphError.missingIngress(node: node)
+        let edges = ingressEdges(for: node)
+        guard edges.count > 0 else {
+            throw HelmError<Element>.missingIngressEdges(from: node)
         }
-        guard segues.count == 1 else {
-            throw GraphError.ambiguousIngress(node: node, segues: segues)
+        guard edges.count == 1 else {
+            throw HelmError<Element>.ambiguousIngressEdges(edges, from: node)
         }
-        return segues.first!
+        return edges.first!
     }
 
     /// Inlets are edges that are unconnected with the graph at their `in` node.
@@ -214,14 +214,9 @@ public extension EdgeCollection where Element: DirectedConnectable {
 }
 
 extension OrderedSet: EdgeCollection {}
-extension Set: EdgeCollection {}
 
-/// A graph is a collection of unordered edges
-public typealias Graph<E: UndirectedConnectable> = Set<E>
-/// A directed graph is a collection of unordered directed edges
-public typealias DirectedGraph<E: DirectedConnectable> = Set<E>
-/// A directed path is a collection of ordered directed edges
-public typealias GraphPath<E: DirectedConnectable> = OrderedSet<E>
+/// A directed graph is a collection of ordered directed edges
+public typealias DirectedGraph<E: DirectedConnectable> = OrderedSet<E>
 
 public struct Walker<C: DirectedConnectable> {
     let graph: DirectedGraph<C>
@@ -232,26 +227,26 @@ public struct Walker<C: DirectedConnectable> {
 
         let inlets = graph.inlets
         var visited: Set<C.N> = []
-        var segues: OrderedSet<C> = inlets.count > 0 ? inlets : [first]
+        var edges: OrderedSet<C> = inlets.count > 0 ? inlets : [first]
         var stack: [OrderedSet<C>] = []
 
-        while segues.count > 0 {
-            let segue = segues.removeFirst()
+        while edges.count > 0 {
+            let edge = edges.removeFirst()
 
-            if !visited.contains(segue.out) {
-                let outs = graph.egressEdges(for: segue.out)
+            if !visited.contains(edge.out) {
+                let outs = graph.egressEdges(for: edge.out)
                 if outs.count > 0 {
-                    if segues.count > 0 {
-                        stack.append(segues)
+                    if edges.count > 0 {
+                        stack.append(edges)
                     }
-                    segues = outs
+                    edges = outs
                 }
-                visited.insert(segue.out)
+                visited.insert(edge.out)
             }
 
-            if segues.count == 0 {
+            if edges.count == 0 {
                 if let next = stack.popLast() {
-                    segues = next
+                    edges = next
                 }
             }
         }
