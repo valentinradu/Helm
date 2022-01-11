@@ -64,17 +64,6 @@ public struct Segue<N: Section>: DirectedConnectable, Equatable {
         self.auto = auto
         self.tag = tag
     }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(self.in)
-        hasher.combine(out)
-    }
-
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        return
-            lhs.in == rhs.in &&
-            lhs.out == rhs.out
-    }
 }
 
 /// Segue rules define what happens with the origin section when presenting other section.

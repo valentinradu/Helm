@@ -10,11 +10,22 @@ import Foundation
 import SwiftUI
 
 private extension Set {
-    func presentedSections(forPath path: OrderedSet<Element>) -> OrderedSet<Element.N>
-        where Element: DirectedConnectable, Element.N: Section
+    func presentedSections<N: Section>(forPath path: OrderedSet<Element>) -> OrderedSet<Element.N>
+        where Element == Segue<N>
     {
-        print(path)
-        return []
+        var result: OrderedSet<Element.N> = []
+
+        for leg in path {
+            switch leg.rule {
+            case .hold:
+                result.append(leg.out)
+            case .replace:
+                result.remove(leg.in)
+                result.append(leg.out)
+            }
+        }
+
+        return result
     }
 }
 
@@ -197,17 +208,30 @@ public class Helm<N: Section>: ObservableObject {
     /// Triggers a segue dismissing its out node.
     /// If possible, use one of the higher level present or dismiss methods instead.
     public func dismiss(segue: S) throws {
-        guard segue.dismissable else {
-            throw HelmError<S>.segueNotDismissable(segue)
-        }
-
         guard nav.has(edge: segue) else {
             throw HelmError.missingSegue(segue)
+        }
+
+        guard segue.dismissable else {
+            throw HelmError<S>.segueNotDismissable(segue)
         }
 
         guard path.contains(segue) else {
             throw HelmError<S>.sectionNotPresented(segue.in)
         }
+
+        for ingressSegue in path.ingressEdges(for: segue.out) {
+            path.remove(ingressSegue)
+        }
+
+        let removables = path
+            .disconnectedSubgraphs
+            .filter {
+                !$0.has(node: segue.in)
+            }
+            .flatMap { $0 }
+
+        path = path.subtracting(removables)
     }
 
     /// Checks if a section is presented. Shorthand for `presentedSections.has(node: section)`
@@ -241,8 +265,9 @@ public class Helm<N: Section>: ObservableObject {
             throw HelmError<S>.missingInlets
         }
 
-        if let segues = Set(nav.filter { $0.auto }).firstCycle {
-            throw HelmError.autoCycleDetected(segues)
+        let autoSegues = Set(nav.filter { $0.auto })
+        if autoSegues.hasCycle {
+            throw HelmError.autoCycleDetected(autoSegues)
         }
     }
 }

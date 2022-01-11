@@ -5,8 +5,8 @@
 //  Created by Valentin Radu on 07/01/2022.
 //
 
-import Foundation
 import Collections
+import Foundation
 
 /// A node in the graph
 public protocol Node: Hashable {}
@@ -85,51 +85,19 @@ public extension EdgeCollection where Element: DirectedConnectable {
 
     // Detect if the graph has cycles
     var hasCycle: Bool {
-        firstCycle != nil
-    }
-
-    // Returns the first cycle it encounters, if any.
-    var firstCycle: Set<Element>? {
-        guard let first = first else {
-            return nil
-        }
-
         var visited: Set<Element.N> = []
-        var edges: Set<Element> = inlets.count > 0 ? inlets : [first]
-        var path: Set<Element> = []
-        var stack: [(Set<Element>, Set<Element>)] = []
-
-        while edges.count > 0 {
-            let edge = edges.removeFirst()
-
-            if !visited.contains(edge.out) {
-                let outs = egressEdges(for: edge.out)
-                if outs.count > 0 {
-                    if edges.count > 0 {
-                        stack.append((path, edges))
-                    }
-                    edges = outs
-                }
-                visited.insert(edge.out)
-                path.insert(edge)
-            } else {
-                let cycle = path.drop(while: { $0.in != edge.out }) + [edge]
-                guard cycle.count > 1 else {
-                    assertionFailure("A cycle should have at least 2 edges.")
-                    return nil
-                }
-                return Set(cycle)
+        var result = false
+        dfs {
+            if visited.contains($0.out) {
+                result = true
+                return false
             }
-
-            if edges.count == 0 {
-                if let (nextPath, nextEdges) = stack.popLast() {
-                    path = nextPath
-                    edges = nextEdges
-                }
+            else {
+                visited.insert($0.out)
+                return true
             }
         }
-
-        return nil
+        return result
     }
 
     /// Returns all the edges that leave a specific node
@@ -211,6 +179,72 @@ public extension EdgeCollection where Element: DirectedConnectable {
     var nodes: Set<Element.N> {
         Set(flatMap { [$0.in, $0.out] })
     }
+
+    var disconnectedSubgraphs: OrderedSet<Set<Element>> {
+        var labels: [Element: Int] = [:]
+        var currentLabel = 0
+
+        for segue in self {
+            guard labels[segue] == nil else {
+                continue
+            }
+            dfs(from: segue.in) {
+                labels[$0] = currentLabel
+                return false
+            }
+            currentLabel += 1
+        }
+
+        let result = Dictionary(grouping: labels, by: { $0.value })
+            .values
+            .map {
+                Set($0.map { $0.key })
+            }
+
+        return OrderedSet(result)
+    }
+
+    /// Iterates through the entire graph or a section of it (starting at a given node) depth first. Edges leading to the same node are all iterated.
+    /// - parameter from: An optional start node. If not provided, the entire graph will be iterated.
+    /// - parameter iterator: A closure that receives the current iterated edge and returns if the iteration should continue.
+    func dfs(from: Element.N? = nil, _ iterator: (Element) -> Bool) {
+        let entries: Set<Element>
+
+        if let from = from {
+            entries = egressEdges(for: from)
+        }
+        else if inlets.count > 0 {
+            entries = inlets
+        }
+        else if let first = first {
+            entries = [first]
+        }
+        else {
+            return
+        }
+
+        var visited: Set<Element> = []
+        for entry in entries {
+            var stack: [Element] = [entry]
+
+            while let edge = stack.last {
+                let nextEdges = filter {
+                    $0.in == edge.out && !visited.contains($0)
+                }
+
+                if let nextEdge = nextEdges.first {
+                    if iterator(nextEdge) {
+                        return
+                    }
+                    visited.insert(nextEdge)
+                    stack.append(nextEdge)
+                }
+                else {
+                    stack.removeLast()
+                }
+            }
+        }
+    }
 }
 
 extension Set: EdgeCollection {}
@@ -218,35 +252,4 @@ extension OrderedSet: EdgeCollection {}
 
 public struct Walker<C: DirectedConnectable> {
     let graph: Set<C>
-    func dfs() {
-        guard let first = graph.first else {
-            return
-        }
-
-        let inlets = graph.inlets
-        var visited: Set<C.N> = []
-        var edges: Set<C> = inlets.count > 0 ? inlets : [first]
-        var stack: [Set<C>] = []
-
-        while edges.count > 0 {
-            let edge = edges.removeFirst()
-
-            if !visited.contains(edge.out) {
-                let outs = graph.egressEdges(for: edge.out)
-                if outs.count > 0 {
-                    if edges.count > 0 {
-                        stack.append(edges)
-                    }
-                    edges = outs
-                }
-                visited.insert(edge.out)
-            }
-
-            if edges.count == 0 {
-                if let next = stack.popLast() {
-                    edges = next
-                }
-            }
-        }
-    }
 }
