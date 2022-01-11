@@ -55,18 +55,14 @@ public extension EdgeCollection where Element: DirectedConnectable {
     // Detect if the graph has cycles
     var hasCycle: Bool {
         var visited: Set<Element.N> = []
-        var result = false
-        dfs {
-            if visited.contains($0.out) {
-                result = true
-                return false
-            }
-            else {
-                visited.insert($0.out)
+        for segue in dfs() {
+            if visited.contains(segue.out) {
                 return true
+            } else {
+                visited.insert(segue.out)
             }
         }
-        return result
+        return false
     }
 
     /// Returns all the edges that leave a specific node
@@ -157,9 +153,8 @@ public extension EdgeCollection where Element: DirectedConnectable {
             guard labels[segue] == nil else {
                 continue
             }
-            dfs(from: segue.in) {
-                labels[$0] = currentLabel
-                return false
+            for nextSegue in dfs(from: segue.in) {
+                labels[nextSegue] = currentLabel
             }
             currentLabel += 1
         }
@@ -173,26 +168,23 @@ public extension EdgeCollection where Element: DirectedConnectable {
         return OrderedSet(result)
     }
 
-    /// Iterates through the entire graph or a section of it (starting at a given node) depth first. Edges leading to the same node are all iterated.
+    /// Iterates through the entire graph or a section of it (starting at a given node) depth first. Edges leading to the same node are iterated.
     /// - parameter from: An optional start node. If not provided, the entire graph will be iterated.
-    /// - parameter iterator: A closure that receives the current iterated edge and returns if the iteration should continue.
-    func dfs(from: Element.N? = nil, _ iterator: (Element) -> Bool) {
+    /// - returns: An ordered set containing all the iterated segues in the right order.
+    func dfs(from: Element.N? = nil) -> OrderedSet<Element> {
+        var visited: OrderedSet<Element> = []
         let entries: Set<Element>
 
         if let from = from {
             entries = egressEdges(for: from)
-        }
-        else if inlets.count > 0 {
+        } else if inlets.count > 0 {
             entries = inlets
-        }
-        else if let first = first {
+        } else if let first = first {
             entries = [first]
-        }
-        else {
-            return
+        } else {
+            return []
         }
 
-        var visited: Set<Element> = []
         for entry in entries {
             var stack: [Element] = [entry]
 
@@ -202,17 +194,15 @@ public extension EdgeCollection where Element: DirectedConnectable {
                 }
 
                 if let nextEdge = nextEdges.first {
-                    if iterator(nextEdge) {
-                        return
-                    }
-                    visited.insert(nextEdge)
+                    visited.append(nextEdge)
                     stack.append(nextEdge)
-                }
-                else {
+                } else {
                     stack.removeLast()
                 }
             }
         }
+
+        return visited
     }
 }
 
