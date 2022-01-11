@@ -5,8 +5,8 @@
 //  Created by Valentin Radu on 07/01/2022.
 //
 
-import Collections
 import Foundation
+import Collections
 
 /// A node in the graph
 public protocol Node: Hashable {}
@@ -89,15 +89,15 @@ public extension EdgeCollection where Element: DirectedConnectable {
     }
 
     // Returns the first cycle it encounters, if any.
-    var firstCycle: OrderedSet<Element>? {
+    var firstCycle: Set<Element>? {
         guard let first = first else {
             return nil
         }
 
         var visited: Set<Element.N> = []
-        var edges: OrderedSet<Element> = inlets.count > 0 ? inlets : [first]
-        var path: OrderedSet<Element> = []
-        var stack: [(OrderedSet<Element>, OrderedSet<Element>)] = []
+        var edges: Set<Element> = inlets.count > 0 ? inlets : [first]
+        var path: Set<Element> = []
+        var stack: [(Set<Element>, Set<Element>)] = []
 
         while edges.count > 0 {
             let edge = edges.removeFirst()
@@ -111,14 +111,14 @@ public extension EdgeCollection where Element: DirectedConnectable {
                     edges = outs
                 }
                 visited.insert(edge.out)
-                path.append(edge)
+                path.insert(edge)
             } else {
                 let cycle = path.drop(while: { $0.in != edge.out }) + [edge]
                 guard cycle.count > 1 else {
                     assertionFailure("A cycle should have at least 2 edges.")
                     return nil
                 }
-                return OrderedSet(cycle)
+                return Set(cycle)
             }
 
             if edges.count == 0 {
@@ -134,14 +134,14 @@ public extension EdgeCollection where Element: DirectedConnectable {
 
     /// Returns all the edges that leave a specific node
     /// - parameter for: The node from which the edges leave
-    func egressEdges(for node: Element.N) -> OrderedSet<Element> {
-        OrderedSet(filter { $0.in == node })
+    func egressEdges(for node: Element.N) -> Set<Element> {
+        Set(filter { $0.in == node })
     }
 
     /// Returns all the edges that leave a set of nodes
     /// - parameter for: The node from which the edges leave
-    func egressEdges(for nodes: OrderedSet<Element.N>) -> OrderedSet<Element> {
-        OrderedSet(
+    func egressEdges(for nodes: Set<Element.N>) -> Set<Element> {
+        Set(
             nodes.flatMap {
                 egressEdges(for: $0)
             }
@@ -164,14 +164,14 @@ public extension EdgeCollection where Element: DirectedConnectable {
 
     /// Returns all the edges that arrive to a specific node
     /// - parameter for: The destination node
-    func ingressEdges(for node: Element.N) -> OrderedSet<Element> {
-        OrderedSet(filter { $0.out == node })
+    func ingressEdges(for node: Element.N) -> Set<Element> {
+        Set(filter { $0.out == node })
     }
 
     /// Returns all the edges that arrive to a set of nodes
     /// - parameter for: The destination nodes
-    func ingressEdges(for nodes: OrderedSet<Element.N>) -> OrderedSet<Element> {
-        OrderedSet(
+    func ingressEdges(for nodes: Set<Element.N>) -> Set<Element> {
+        Set(
             nodes.flatMap {
                 ingressEdges(for: $0)
             }
@@ -194,32 +194,30 @@ public extension EdgeCollection where Element: DirectedConnectable {
 
     /// Inlets are edges that are unconnected with the graph at their `in` node.
     /// They can be seen as entry points in a directed graph.
-    var inlets: OrderedSet<Element> {
+    var inlets: Set<Element> {
         let ins = Set(map { $0.in })
         let outs = Set(map { $0.out })
-        return egressEdges(for: OrderedSet(ins.subtracting(outs)))
+        return egressEdges(for: Set(ins.subtracting(outs)))
     }
 
     /// Outlets are edges that are unconnected with the graph at their `out` node.
     /// They can be seen as exit points in a directed graph.
-    var outlets: OrderedSet<Element> {
+    var outlets: Set<Element> {
         let ins = Set(map { $0.in })
         let outs = Set(map { $0.out })
-        return ingressEdges(for: OrderedSet(outs.subtracting(ins)))
+        return ingressEdges(for: Set(outs.subtracting(ins)))
     }
 
-    var nodes: OrderedSet<Element.N> {
-        OrderedSet(flatMap { [$0.in, $0.out] })
+    var nodes: Set<Element.N> {
+        Set(flatMap { [$0.in, $0.out] })
     }
 }
 
+extension Set: EdgeCollection {}
 extension OrderedSet: EdgeCollection {}
 
-/// A directed graph is a collection of ordered directed edges
-public typealias DirectedGraph<E: DirectedConnectable> = OrderedSet<E>
-
 public struct Walker<C: DirectedConnectable> {
-    let graph: DirectedGraph<C>
+    let graph: Set<C>
     func dfs() {
         guard let first = graph.first else {
             return
@@ -227,8 +225,8 @@ public struct Walker<C: DirectedConnectable> {
 
         let inlets = graph.inlets
         var visited: Set<C.N> = []
-        var edges: OrderedSet<C> = inlets.count > 0 ? inlets : [first]
-        var stack: [OrderedSet<C>] = []
+        var edges: Set<C> = inlets.count > 0 ? inlets : [first]
+        var stack: [Set<C>] = []
 
         while edges.count > 0 {
             let edge = edges.removeFirst()

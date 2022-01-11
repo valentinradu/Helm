@@ -5,7 +5,6 @@
 //  Created by Valentin Radu on 31/12/2021.
 //
 
-import Collections
 import Foundation
 
 public enum HelmError<E: DirectedConnectable>: Error {
@@ -13,15 +12,15 @@ public enum HelmError<E: DirectedConnectable>: Error {
     case emptyPath
     case missingInlets
     case ambiguousForwardInlets
-    case autoCycleDetected(OrderedSet<E>)
-    case ambiguousAutoSegues(OrderedSet<E>)
+    case autoCycleDetected(Set<E>)
+    case ambiguousAutoSegues(Set<E>)
     case missingTaggedSegue(name: AnyHashable)
     case sectionNotPresented(E.N)
     case sectionMissingDismissableSegue(E.N)
     case segueNotDismissable(E)
     case missingSegue(E)
-    case ambiguousEgressEdges(OrderedSet<E>, from: E.N)
-    case ambiguousIngressEdges(OrderedSet<E>, from: E.N)
+    case ambiguousEgressEdges(Set<E>, from: E.N)
+    case ambiguousIngressEdges(Set<E>, from: E.N)
     case missingEgressEdges(from: E.N)
     case missingIngressEdges(from: E.N)
 }
