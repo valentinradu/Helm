@@ -11,21 +11,6 @@ import Foundation
 /// A node in the graph
 public protocol Node: Hashable {}
 
-/// The undirected relationship between two nodes.
-public protocol UndirectedConnectable: Hashable {
-    associatedtype N: Node
-    /// The input node
-    var lhs: N { get }
-    /// The output node
-    var rhs: N { get }
-}
-
-public extension CustomDebugStringConvertible where Self: UndirectedConnectable {
-    var debugDescription: String {
-        return "\(lhs) - \(rhs)"
-    }
-}
-
 /// The directed relationship between two nodes.
 public protocol DirectedConnectable: Hashable {
     associatedtype N: Node
@@ -39,12 +24,6 @@ public extension CustomDebugStringConvertible where Self: DirectedConnectable {
     var debugDescription: String {
         return "\(`in`) -> \(out)"
     }
-}
-
-/// An edge between two nodes
-public struct Edge<N: Node>: UndirectedConnectable {
-    public let lhs: N
-    public let rhs: N
 }
 
 /// An directed edge between two nodes
@@ -61,16 +40,6 @@ public extension EdgeCollection where Element: Hashable {
     /// - parameter edge: The edge to search for
     func has(edge: Element) -> Bool {
         contains(edge)
-    }
-}
-
-public extension EdgeCollection where Element: UndirectedConnectable {
-    /// Checks if the graph has a specific node.
-    /// - parameter node: The node to search for
-    func has(node: Element.N) -> Bool {
-        contains(where: {
-            $0.rhs == node || $0.lhs == node
-        })
     }
 }
 
