@@ -18,6 +18,7 @@ public enum HelmError<E: DirectedConnectable>: Error {
     case missingTaggedSegue(name: AnyHashable)
     case sectionNotPresented(E.N)
     case sectionMissingDismissableSegue(E.N)
+    case segueNotDismissable(E)
     case missingSegue(E)
     case ambiguousEgressEdges(OrderedSet<E>, from: E.N)
     case ambiguousIngressEdges(OrderedSet<E>, from: E.N)
@@ -56,6 +57,8 @@ extension HelmError: LocalizedError {
             return "Missing egress segues from \(node)."
         case let .missingIngressEdges(node):
             return "Missing ingress segues towards \(node)."
+        case let .segueNotDismissable(segue):
+            return "\(segue) is not dismissable."
         }
     }
 }

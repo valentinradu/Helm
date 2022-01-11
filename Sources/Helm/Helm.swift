@@ -178,7 +178,7 @@ public class Helm<N: Section>: ObservableObject {
         }
     }
 
-    /// Triggers a segue by its edge presenting its out node.
+    /// Triggers a segue presenting its out node.
     /// If possible, use one of the higher level present or dismiss methods instead.
     public func present(segue: S) throws {
         guard nav.has(edge: segue) else {
@@ -188,14 +188,33 @@ public class Helm<N: Section>: ObservableObject {
         guard presentedSections.has(node: segue.in) else {
             throw HelmError<S>.sectionNotPresented(segue.in)
         }
+
+        path.append(segue.edge)
     }
 
-    /// Triggers a segue by its edge dismissing its out node.
+    /// Triggers a segue dismissing its out node.
     /// If possible, use one of the higher level present or dismiss methods instead.
     public func dismiss(segue: S) throws {
-        guard presentedSections.has(node: segue.in) else {
+        guard segue.dismissable else {
+            throw HelmError<S>.segueNotDismissable(segue)
+        }
+
+        guard nav.has(edge: segue) else {
+            throw HelmError.missingSegue(segue)
+        }
+
+        guard path.has(edge: segue.edge) else {
             throw HelmError<S>.sectionNotPresented(segue.in)
         }
+        
+        var newPath = path
+        var edges = newPath.egressEdges(for: segue.out)
+        var stack: [OrderedSet<S>] = []
+        
+        for edge in edges {
+            
+        }
+        
     }
 
     /// Checks if a section is presented. Shorthand for `presentedSections.has(node: section)`
@@ -230,7 +249,7 @@ public class Helm<N: Section>: ObservableObject {
             throw HelmError<S>.missingInlets
         }
 
-        if let segues = OrderedSet(nav.filter({ $0.auto })).firstCycle {
+        if let segues = OrderedSet(nav.filter { $0.auto }).firstCycle {
             throw HelmError.autoCycleDetected(segues)
         }
     }
