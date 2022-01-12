@@ -8,6 +8,9 @@
 @testable import Helm
 import XCTest
 
+private typealias TestGraphEdge = DirectedEdge<TestNode>
+private typealias TestGraph = Set<TestGraphEdge>
+
 class GraphTests: XCTestCase {
     func testPrintEdge() {
         XCTAssertEqual(TestGraphEdge.ab.debugDescription, "a -> b")
@@ -40,6 +43,11 @@ class GraphTests: XCTestCase {
         
         let loopGraph = TestGraph([.ab, .ba])
         XCTAssertTrue(loopGraph.hasCycle)
+    }
+    
+    func testFirstCycle() {
+        let graph = TestGraph([.ab, .bc, .cd, .db])
+        XCTAssertEqual(graph.firstCycle, [.bc, .cd, .db])
     }
     
     func testEgressEdges() {

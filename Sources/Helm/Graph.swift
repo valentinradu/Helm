@@ -66,17 +66,21 @@ public extension EdgeCollection where Element: DirectedConnectable {
         })
     }
 
-    // Detect if the graph has cycles
+    /// Detect if the graph has cycles
     var hasCycle: Bool {
+        firstCycle != nil
+    }
+
+    /// Finds the first cycle in the graph
+    var firstCycle: Set<Element>? {
         var visited: Set<Element> = []
-        
-        
+
         guard count > 0 else {
-            return false
+            return nil
         }
-        
+
         guard inlets.count > 0 else {
-            return true
+            return Set(self)
         }
 
         for entry in inlets {
@@ -88,23 +92,22 @@ public extension EdgeCollection where Element: DirectedConnectable {
                 let nextEdges =
                     filter { $0.from == edge.to && !visited.contains($0) }
                         .sorted()
-                
-                let stackNodes = Set(stack.flatMap { [$0.from, $0.to] })
-                let nextEdgesNodes = Set(nextEdges.map { $0.to })
-                
-                if !stackNodes.isDisjoint(with: nextEdgesNodes) {
-                    return true
-                }
 
                 if let nextEdge = nextEdges.first {
-                    stack.append(nextEdge)
+                    let cycle = stack.drop(while: { nextEdge.to != $0.from })
+
+                    if cycle.count > 0 {
+                        return Set(cycle + [nextEdge])
+                    } else {
+                        stack.append(nextEdge)
+                    }
                 } else {
                     stack.removeLast()
                 }
             }
         }
 
-        return false
+        return nil
     }
 
     /// Returns all the edges that leave a specific node

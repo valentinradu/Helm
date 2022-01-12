@@ -30,13 +30,13 @@ public struct Segue<N: Fragment>: DirectedConnectable, Equatable {
     public let tag: AnyHashable?
 
     /// Initializes a new segue.
-    /// - parameter in: The input fragment (origin fragment)
-    /// - parameter out: The output fragment (destination fragment)
+    /// - parameter from: The input fragment (origin fragment)
+    /// - parameter to: The output fragment (destination fragment)
     /// - parameter rule: The rule. Defaults to `.replace`.
     /// - parameter dismissable: A dismissable segue is allowed to return to the origin fragment.
     /// - parameter auto: Sets the auto firing behaviour. A fragment can only have one egress auto segue. Defaults to `false`.
     /// - parameter tag: A tag identifying the segue. Defaults to `nil`.
-    public init(_ in: N,
+    public init(from in: N,
                 to out: N,
                 rule: SeguePresentationRule = .replace,
                 dismissable: Bool = false,
