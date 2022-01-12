@@ -15,14 +15,14 @@ public enum HelmError<E: DirectedConnectable>: Error {
     case autoCycleDetected(Set<E>)
     case ambiguousAutoSegues(Set<E>)
     case missingTaggedSegue(name: AnyHashable)
-    case sectionNotPresented(E.N)
-    case sectionMissingDismissableSegue(E.N)
+    case fragmentNotPresented(E.N)
+    case fragmentMissingDismissableSegue(E.N)
     case segueNotDismissable(E)
     case missingSegue(E)
     case ambiguousEgressEdges(Set<E>, from: E.N)
-    case ambiguousIngressEdges(Set<E>, from: E.N)
+    case ambiguousIngressEdges(Set<E>, to: E.N)
     case missingEgressEdges(from: E.N)
-    case missingIngressEdges(from: E.N)
+    case missingIngressEdges(to: E.N)
 }
 
 extension HelmError: LocalizedError {
@@ -40,10 +40,10 @@ extension HelmError: LocalizedError {
             return "Can't find segue with tag \(name)."
         case .ambiguousForwardInlets:
             return "Can't initially forward a navigation graph with multiple inlets."
-        case let .sectionNotPresented(section):
-            return "(\(section)) is not presented."
-        case let .sectionMissingDismissableSegue(section):
-            return "\(section) has no dismissable ingress segue."
+        case let .fragmentNotPresented(fragment):
+            return "(\(fragment)) is not presented."
+        case let .fragmentMissingDismissableSegue(fragment):
+            return "\(fragment) has no dismissable ingress segue."
         case .emptyPath:
             return "Navigation path is empty."
         case let .missingSegue(segue):

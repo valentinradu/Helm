@@ -9,7 +9,7 @@ import Helm
 import SwiftUI
 
 struct SplashView: View {
-    @EnvironmentObject private var _nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject private var _helm: Helm<KeyScreen>
 
     var body: some View {
         VStack(alignment: .center) {

@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 
 private extension Set {
-    func presentedSections<N: Section>(forPath path: OrderedSet<Element>) -> OrderedSet<Element.N>
+    func presentedFragments<N: Fragment>(forPath path: OrderedSet<Element>) -> OrderedSet<Element.N>
         where Element == Segue<N>
     {
         var result: OrderedSet<Element.N> = []
@@ -18,10 +18,10 @@ private extension Set {
         for leg in path {
             switch leg.rule {
             case .hold:
-                result.append(leg.out)
+                result.append(leg.to)
             case .replace:
-                result.remove(leg.in)
-                result.append(leg.out)
+                result.remove(leg.from)
+                result.append(leg.to)
             }
         }
 
@@ -29,57 +29,57 @@ private extension Set {
     }
 }
 
-/// `Helm` holds all navigation rules between sections in the app, plus the path that leads to the currently presented ones.
-public class Helm<N: Section>: ObservableObject {
+/// `Helm` holds all navigation rules between fragments in the app, plus the path that leads to the currently presented ones.
+public class Helm<N: Fragment>: ObservableObject {
     public typealias S = Segue<N>
     /// The graph that describes all the navigation rules in the app.
     public let nav: Set<S>
 
-    /// The currently presented sections and the relationship between them.
+    /// The currently presented fragments and the relationship between them.
     public private(set) var path: OrderedSet<Segue<N>> {
         didSet {
-            presentedSections = nav.presentedSections(forPath: path)
+            presentedFragments = nav.presentedFragments(forPath: path)
         }
     }
 
-    /// The presented sections in the order they were presented.
-    @Published public private(set) var presentedSections: OrderedSet<N>
+    /// The presented fragments in the order they were presented.
+    @Published public private(set) var presentedFragments: OrderedSet<N>
 
     /// All the errors triggered by navigating
     @Published public private(set) var errors: [Error]
 
     /// Initializes a new Helm instance.
-    /// - parameter nav: A directed graph of segues that defies all the navigation rules between sections in the app.
-    /// - parameter path: The path that leads to the currently presented sections.
+    /// - parameter nav: A directed graph of segues that defies all the navigation rules between fragments in the app.
+    /// - parameter path: The path that leads to the currently presented fragments.
     public init(nav: Set<S>,
                 path: OrderedSet<S> = []) throws
     {
         errors = []
-        presentedSections = nav.presentedSections(forPath: path)
+        presentedFragments = nav.presentedFragments(forPath: path)
         self.nav = nav
         self.path = path
         try validate()
     }
 
-    /// Presents a section.
-    /// A segue must connect it to one of the presented section.
+    /// Presents a fragment.
+    /// A segue must connect it to one of the presented fragment.
     /// If there is no such segue, the operation fails.
-    /// If multiple presented origin sections are available, the search starts with the lastest.
-    /// - parameter section: The given section.
-    public func present(section: N) {
+    /// If multiple presented origin fragments are available, the search starts with the lastest.
+    /// - parameter fragment: The given fragment.
+    public func present(fragment: N) {
         do {
-            if presentedSections.isEmpty {
-                let segue = try nav.inlets.uniqueIngressEdge(for: section)
+            if presentedFragments.isEmpty {
+                let segue = try nav.inlets.uniqueIngressEdge(for: fragment)
                 try present(segue: segue)
             } else {
-                let segues = presentedSections
+                let segues = presentedFragments
                     .reversed()
                     .flatMap {
-                        nav.egressEdges(for: $0).ingressEdges(for: section)
+                        nav.egressEdges(for: $0).ingressEdges(for: fragment)
                     }
 
                 guard let segue = segues.first else {
-                    throw HelmError<S>.missingEgressEdges(from: section)
+                    throw HelmError<S>.missingEgressEdges(from: fragment)
                 }
 
                 try present(segue: segue)
@@ -89,13 +89,13 @@ public class Helm<N: Section>: ObservableObject {
         }
     }
 
-    /// Presents a section by triggering a segue with a specific tag.
-    /// The segue must originate from a presented section.
+    /// Presents a fragment by triggering a segue with a specific tag.
+    /// The segue must originate from a presented fragment.
     /// If there is no such segue, the operation fails.
     /// - parameter tag: The tag to look after.
     public func present<T: SegueTag>(tag: T) {
         do {
-            let segues = presentedSections
+            let segues = presentedFragments
                 .reversed()
                 .flatMap {
                     nav
@@ -113,13 +113,13 @@ public class Helm<N: Section>: ObservableObject {
         }
     }
 
-    /// Presents the next section by triggering the sole egress segue of the latest presented section.
-    /// If the section has more than a segue, the operation fails
-    /// If the section has no segue, the operation fails
+    /// Presents the next fragment by triggering the sole egress segue of the latest presented fragment.
+    /// If the fragment has more than a segue, the operation fails
+    /// If the fragment has no segue, the operation fails
     public func forward() {
         do {
-            if let section = presentedSections.last {
-                let segue = try nav.uniqueEgressEdge(for: section)
+            if let fragment = presentedFragments.last {
+                let segue = try nav.uniqueEgressEdge(for: fragment)
                 try present(segue: segue)
             } else {
                 let segues = nav.inlets
@@ -136,14 +136,14 @@ public class Helm<N: Section>: ObservableObject {
         }
     }
 
-    /// Dismisses a section.
-    /// If the section is not already presented, the operation fails.
-    /// If the section has no dismissable ingress segues, the operation fails.
+    /// Dismisses a fragment.
+    /// If the fragment is not already presented, the operation fails.
+    /// If the fragment has no dismissable ingress segues, the operation fails.
     /// - note: Only the segues in the path (already visited) are considered.
-    /// - parameter section: The given section.
-    public func dismiss(section: N) {
+    /// - parameter fragment: The given fragment.
+    public func dismiss(fragment: N) {
         do {
-            let segues = presentedSections
+            let segues = presentedFragments
                 .reversed()
                 .flatMap {
                     nav
@@ -152,7 +152,7 @@ public class Helm<N: Section>: ObservableObject {
                 }
 
             guard segues.count > 0 else {
-                throw HelmError<S>.sectionMissingDismissableSegue(section)
+                throw HelmError<S>.fragmentMissingDismissableSegue(fragment)
             }
 
             let segue = segues.first!
@@ -162,7 +162,7 @@ public class Helm<N: Section>: ObservableObject {
         }
     }
 
-    /// Dismisses a section by triggering in reverse a segue with a specific tag.
+    /// Dismisses a fragment by triggering in reverse a segue with a specific tag.
     /// If there is no such segue in the path (already visited), the operation fails.
     /// - parameter tag: The tag to look after.
     public func dismiss<T: SegueTag>(tag: T) {
@@ -177,8 +177,8 @@ public class Helm<N: Section>: ObservableObject {
         }
     }
 
-    /// Dismisses the last presented section.
-    /// The operation fails if the section has no dismissable ingress segue.
+    /// Dismisses the last presented fragment.
+    /// The operation fails if the fragment has no dismissable ingress segue.
     public func dismiss() {
         do {
             guard let segue = path.last else {
@@ -198,8 +198,8 @@ public class Helm<N: Section>: ObservableObject {
             throw HelmError.missingSegue(segue)
         }
 
-        guard presentedSections.contains(segue.in) else {
-            throw HelmError<S>.sectionNotPresented(segue.in)
+        guard presentedFragments.contains(segue.from) else {
+            throw HelmError<S>.fragmentNotPresented(segue.from)
         }
 
         path.append(segue)
@@ -217,41 +217,41 @@ public class Helm<N: Section>: ObservableObject {
         }
 
         guard path.contains(segue) else {
-            throw HelmError<S>.sectionNotPresented(segue.in)
+            throw HelmError<S>.fragmentNotPresented(segue.from)
         }
 
-        for ingressSegue in path.ingressEdges(for: segue.out) {
+        for ingressSegue in path.ingressEdges(for: segue.to) {
             path.remove(ingressSegue)
         }
 
         let removables = path
             .disconnectedSubgraphs
             .filter {
-                !$0.has(node: segue.in)
+                !$0.has(node: segue.from)
             }
             .flatMap { $0 }
 
         path = path.subtracting(removables)
     }
 
-    /// Checks if a section is presented. Shorthand for `presentedSections.has(node: section)`
-    /// - returns: True if the section is presented.
-    public func isPresented(_ section: N) -> Bool {
-        return presentedSections.contains(section)
+    /// Checks if a fragment is presented. Shorthand for `presentedFragments.contains(fragment)`
+    /// - returns: True if the fragment is presented.
+    public func isPresented(_ fragment: N) -> Bool {
+        return presentedFragments.contains(fragment)
     }
 
-    /// A special `isPresented(section:)` function that returns a binding.
-    /// Setting the value to false from the binding is the same thing as calling `dismiss(section:)` with the section as the parameter
-    /// - parameter section: The section
-    /// - returns: A binding, true if the section is presented.
-    public func isPresented(_ section: N) -> Binding<Bool> {
+    /// A special `isPresented(fragment:)` function that returns a binding.
+    /// Setting the value to false from the binding is the same thing as calling `dismiss(fragment:)` with the fragment as the parameter
+    /// - parameter fragment: The fragment
+    /// - returns: A binding, true if the fragment is presented.
+    public func isPresented(_ fragment: N) -> Binding<Bool> {
         return Binding {
-            self.isPresented(section)
+            self.isPresented(fragment)
         } set: {
             if $0 {
-                self.present(section: section)
+                self.present(fragment: fragment)
             } else {
-                self.dismiss(section: section)
+                self.dismiss(fragment: fragment)
             }
         }
     }

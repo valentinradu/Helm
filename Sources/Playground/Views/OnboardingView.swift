@@ -9,13 +9,13 @@ import Helm
 import SwiftUI
 
 struct OnboardingUsernameView: View {
-    @EnvironmentObject private var _nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject private var _helm: Helm<KeyScreen>
     @State private var _username: String = ""
 
     var body: some View {
         VStack(spacing: 60) {
             TextField("Username", text: $_username)
-            LargeButton(action: { try! _nav.forward() }) {
+            LargeButton(action: { _helm.forward() }) {
                 HStack {
                     Text("Next")
                     Image(systemName: "arrow.forward.circle")
@@ -27,11 +27,11 @@ struct OnboardingUsernameView: View {
 }
 
 struct OnboardingTutorialView: View {
-    @EnvironmentObject var nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject var _helm: Helm<KeyScreen>
     var body: some View {
         VStack(spacing: 60) {
             Text("Some possible long tutorial")
-            LargeButton(action: { try! nav.forward() }) {
+            LargeButton(action: { _helm.forward() }) {
                 HStack {
                     Text("Next")
                     Image(systemName: "arrow.forward.circle")
@@ -43,11 +43,11 @@ struct OnboardingTutorialView: View {
 }
 
 struct OnboardingTermsView: View {
-    @EnvironmentObject var nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject var _helm: Helm<KeyScreen>
     var body: some View {
         VStack(spacing: 60) {
             Text("Full terms and conditions")
-            LargeButton(action: { try! nav.forward() }) {
+            LargeButton(action: { _helm.forward() }) {
                 HStack {
                     Text("Finish")
                     Image(systemName: "checkmark.circle")
@@ -59,17 +59,17 @@ struct OnboardingTermsView: View {
 }
 
 struct OnboardingView: View {
-    @EnvironmentObject var nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject var _helm: Helm<KeyScreen>
 
     var body: some View {
         NavigationView {
             OnboardingUsernameView()
             NavigationLink(destination: OnboardingTutorialView(),
-                           isActive: nav.isPresented(.onboardingTutorial)) {
+                           isActive: _helm.isPresented(.onboardingTutorial)) {
                 EmptyView()
             }
             NavigationLink(destination: OnboardingTermsView(),
-                           isActive: nav.isPresented(.onboardingPrivacyPolicy)) {
+                           isActive: _helm.isPresented(.onboardingPrivacyPolicy)) {
                 EmptyView()
             }
         }

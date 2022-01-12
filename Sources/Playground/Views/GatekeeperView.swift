@@ -12,7 +12,7 @@ import SwiftUI
 struct LoginView: View {
     @State var email: String = ""
     @State var password: String = ""
-    @EnvironmentObject var nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject var _helm: Helm<KeyScreen>
 
     var body: some View {
         VStack(spacing: 60) {
@@ -21,16 +21,16 @@ struct LoginView: View {
                 TextField("Password", text: $password)
             }
             VStack(spacing: 30) {
-                LargeButton(action: { try! nav.present(node: .dashboard) }) {
+                LargeButton(action: { _helm.present(fragment: .dashboard) }) {
                     Text("Login")
                 }
                 .buttonStyle(FillButton())
                 Group {
-                    LargeButton(action: { try! nav.present(node: .register) }) {
+                    LargeButton(action: { _helm.present(fragment: .register) }) {
                         Text("Register")
                             .textCase(.uppercase)
                     }
-                    LargeButton(action: { try! nav.present(node: .forgotPass) }) {
+                    LargeButton(action: { _helm.present(fragment: .forgotPass) }) {
                         Text("Forgot password")
                     }
                 }
@@ -46,7 +46,7 @@ struct RegisterView: View {
     @State var lastName: String = ""
     @State var email: String = ""
     @State var password: String = ""
-    @EnvironmentObject var nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject var _helm: Helm<KeyScreen>
 
     var body: some View {
         VStack(spacing: 60) {
@@ -57,16 +57,16 @@ struct RegisterView: View {
                 TextField("Password", text: $password)
             }
             VStack(spacing: 30) {
-                LargeButton(action: { try! nav.present(node: .dashboard) }) {
+                LargeButton(action: { _helm.present(fragment: .dashboard) }) {
                     Text("Register")
                 }
                 .buttonStyle(FillButton())
                 Group {
-                    LargeButton(action: { try! nav.present(node: .login) }) {
+                    LargeButton(action: { _helm.present(fragment: .login) }) {
                         Text("Login")
                             .textCase(.uppercase)
                     }
-                    LargeButton(action: { try! nav.present(node: .forgotPass) }) {
+                    LargeButton(action: { _helm.present(fragment: .forgotPass) }) {
                         Text("Forgot password")
                     }
                 }
@@ -79,7 +79,7 @@ struct RegisterView: View {
 
 struct ForgotPasswordView: View {
     @State var email: String = ""
-    @EnvironmentObject var nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject var _helm: Helm<KeyScreen>
 
     var body: some View {
         VStack(spacing: 60) {
@@ -87,16 +87,16 @@ struct ForgotPasswordView: View {
                 TextField("Email", text: $email)
             }
             VStack(spacing: 30) {
-                LargeButton(action: { try! nav.present(node: .dashboard) }) {
+                LargeButton(action: { _helm.present(fragment: .dashboard) }) {
                     Text("Send me the email")
                 }
                 .buttonStyle(FillButton())
                 Group {
-                    LargeButton(action: { try! nav.present(node: .register) }) {
+                    LargeButton(action: { _helm.present(fragment: .register) }) {
                         Text("Register")
                             .textCase(.uppercase)
                     }
-                    LargeButton(action: { try! nav.present(node: .login) }) {
+                    LargeButton(action: { _helm.present(fragment: .login) }) {
                         Text("Login")
                     }
                 }
@@ -112,13 +112,13 @@ struct GatekeeperView: View {
         VStack(spacing: 0) {
             Image("logo")
             ZStack {
-                Fragment(.login) {
+                DynamicFragment(.login) {
                     LoginView()
                 }
-                Fragment(.register) {
+                DynamicFragment(.register) {
                     RegisterView()
                 }
-                Fragment(.forgotPass) {
+                DynamicFragment(.forgotPass) {
                     ForgotPasswordView()
                 }
             }

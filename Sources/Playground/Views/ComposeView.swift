@@ -10,13 +10,13 @@ import SwiftUI
 
 struct ComposeView: View {
     @State private var _content: String = ""
-    @EnvironmentObject private var _nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject private var _helm: Helm<KeyScreen>
 
     var body: some View {
         VStack(spacing: 60) {
             HStack {
                 Spacer()
-                LargeButton(action: { try! _nav.dismiss() }) {
+                LargeButton(action: { _helm.dismiss() }) {
                     Image(systemName: "xmark")
                 }
             }
@@ -24,7 +24,7 @@ struct ComposeView: View {
                 Text("Write your story")
                     .font(.headline)
                 TextEditor(text: $_content)
-                LargeButton(action: { try! _nav.dismiss() }) {
+                LargeButton(action: { _helm.dismiss() }) {
                     Text("Publish")
                 }
                 .buttonStyle(FillButton())

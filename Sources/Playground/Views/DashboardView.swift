@@ -10,13 +10,13 @@ import SwiftUI
 
 struct LibraryView: View {
     @EnvironmentObject private var _state: AppState
-    @EnvironmentObject private var _nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject private var _helm: Helm<KeyScreen>
 
     var body: some View {
         NavigationView {
             List(_state.articles) {
                 NavigationLink(destination: ArticleView(),
-                               isActive: _nav.isPresented(.article)) {
+                               isActive: _helm.isPresented(.article)) {
                     EmptyView()
                 }
                 LibraryItemView(title: $0.title, desc: $0.desc)
@@ -86,13 +86,13 @@ struct ArticleView: View {
 
 struct DashboardView: View {
     @State private var _selection: Int = 0
-    @EnvironmentObject private var _nav: NavigationGraph<KeyScreen>
+    @EnvironmentObject private var _helm: Helm<KeyScreen>
 
     var body: some View {
         VStack {
             HStack {
                 Spacer()
-                LargeButton(action: { try! _nav.present(node: .compose) }) {
+                LargeButton(action: { _helm.present(fragment: .compose) }) {
                     Image(systemName: "plus.square.on.square")
                 }
             }
@@ -111,12 +111,12 @@ struct DashboardView: View {
                     }
             }
         }
-        .sheet(isPresented: _nav.isPresented(.compose)) {
+        .sheet(isPresented: _helm.isPresented(.compose)) {
             ComposeView()
         }
         .onChange(of: _selection) {
             let screens: [KeyScreen] = [.library, .news, .settings]
-            try! _nav.present(node: screens[$0])
+            _helm.present(fragment: screens[$0])
         }
     }
 }

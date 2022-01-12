@@ -12,24 +12,28 @@ import Foundation
 public protocol Node: Hashable {}
 
 /// The directed relationship between two nodes.
-public protocol DirectedConnectable: Hashable {
+public protocol DirectedConnectable: Hashable, CustomDebugStringConvertible {
     associatedtype N: Node
     /// The input node
-    var `in`: N { get }
+    var from: N { get }
     /// The output node
-    var out: N { get }
+    var to: N { get }
 }
 
 public extension CustomDebugStringConvertible where Self: DirectedConnectable {
     var debugDescription: String {
-        return "\(`in`) -> \(out)"
+        return "\(from) -> \(to)"
     }
 }
 
 /// An directed edge between two nodes
 public struct DirectedEdge<N: Node>: DirectedConnectable {
-    public let `in`: N
-    public let out: N
+    public let from: N
+    public let to: N
+    public init(from: N, to: N) {
+        self.from = from
+        self.to = to
+    }
 }
 
 /// A collection of edges.
@@ -48,7 +52,7 @@ public extension EdgeCollection where Element: DirectedConnectable {
     /// - parameter node: The node to search for
     func has(node: Element.N) -> Bool {
         contains(where: {
-            $0.in == node || $0.out == node
+            $0.from == node || $0.to == node
         })
     }
 
@@ -56,10 +60,10 @@ public extension EdgeCollection where Element: DirectedConnectable {
     var hasCycle: Bool {
         var visited: Set<Element.N> = []
         for segue in dfs() {
-            if visited.contains(segue.out) {
+            if visited.contains(segue.to) {
                 return true
             } else {
-                visited.insert(segue.out)
+                visited.insert(segue.to)
             }
         }
         return false
@@ -68,7 +72,7 @@ public extension EdgeCollection where Element: DirectedConnectable {
     /// Returns all the edges that leave a specific node
     /// - parameter for: The node from which the edges leave
     func egressEdges(for node: Element.N) -> Set<Element> {
-        Set(filter { $0.in == node })
+        Set(filter { $0.from == node })
     }
 
     /// Returns all the edges that leave a set of nodes
@@ -98,7 +102,7 @@ public extension EdgeCollection where Element: DirectedConnectable {
     /// Returns all the edges that arrive to a specific node
     /// - parameter for: The destination node
     func ingressEdges(for node: Element.N) -> Set<Element> {
-        Set(filter { $0.out == node })
+        Set(filter { $0.to == node })
     }
 
     /// Returns all the edges that arrive to a set of nodes
@@ -117,10 +121,10 @@ public extension EdgeCollection where Element: DirectedConnectable {
     func uniqueIngressEdge(for node: Element.N) throws -> Element {
         let edges = ingressEdges(for: node)
         guard edges.count > 0 else {
-            throw HelmError<Element>.missingIngressEdges(from: node)
+            throw HelmError<Element>.missingIngressEdges(to: node)
         }
         guard edges.count == 1 else {
-            throw HelmError<Element>.ambiguousIngressEdges(edges, from: node)
+            throw HelmError<Element>.ambiguousIngressEdges(edges, to: node)
         }
         return edges.first!
     }
@@ -128,21 +132,21 @@ public extension EdgeCollection where Element: DirectedConnectable {
     /// Inlets are edges that are unconnected with the graph at their `in` node.
     /// They can be seen as entry points in a directed graph.
     var inlets: Set<Element> {
-        let ins = Set(map { $0.in })
-        let outs = Set(map { $0.out })
+        let ins = Set(map { $0.from })
+        let outs = Set(map { $0.to })
         return egressEdges(for: Set(ins.subtracting(outs)))
     }
 
     /// Outlets are edges that are unconnected with the graph at their `out` node.
     /// They can be seen as exit points in a directed graph.
     var outlets: Set<Element> {
-        let ins = Set(map { $0.in })
-        let outs = Set(map { $0.out })
+        let ins = Set(map { $0.from })
+        let outs = Set(map { $0.to })
         return ingressEdges(for: Set(outs.subtracting(ins)))
     }
 
     var nodes: Set<Element.N> {
-        Set(flatMap { [$0.in, $0.out] })
+        Set(flatMap { [$0.from, $0.to] })
     }
 
     var disconnectedSubgraphs: OrderedSet<Set<Element>> {
@@ -153,7 +157,7 @@ public extension EdgeCollection where Element: DirectedConnectable {
             guard labels[segue] == nil else {
                 continue
             }
-            for nextSegue in dfs(from: segue.in) {
+            for nextSegue in dfs(from: segue.from) {
                 labels[nextSegue] = currentLabel
             }
             currentLabel += 1
@@ -168,7 +172,7 @@ public extension EdgeCollection where Element: DirectedConnectable {
         return OrderedSet(result)
     }
 
-    /// Iterates through the entire graph or a section of it (starting at a given node) depth first. Edges leading to the same node are iterated.
+    /// Iterates through the entire graph or a fragment of it (starting at a given node) depth first. Edges leading to the same node are iterated.
     /// - parameter from: An optional start node. If not provided, the entire graph will be iterated.
     /// - returns: An ordered set containing all the iterated segues in the right order.
     func dfs(from: Element.N? = nil) -> OrderedSet<Element> {
@@ -190,7 +194,7 @@ public extension EdgeCollection where Element: DirectedConnectable {
 
             while let edge = stack.last {
                 let nextEdges = filter {
-                    $0.in == edge.out && !visited.contains($0)
+                    $0.from == edge.to && !visited.contains($0)
                 }
 
                 if let nextEdge = nextEdges.first {

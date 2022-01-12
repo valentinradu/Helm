@@ -49,23 +49,23 @@ Helm has a declarative approach, which means you have to first construct the und
 
 ### Define the navigation graph
 
-First we have define all the possible dynamic sections of the app: some might be full screens, others, just overlapping views, like a player in a music listening app. This is usually done in an `enum` conforming to the `Node` protocol. This step is done as soon as the app starts and the resulting graph is not mutable (although you can mutate the traits as we will see later).
+First we have define all the possible dynamic fragments of the app: some might be full screens, others, just overlapping views, like a player in a music listening app. This is usually done in an `enum` conforming to the `Node` protocol. This step is done as soon as the app starts and the resulting graph is not mutable (although you can mutate the traits as we will see later).
 
 ```swift
-enum Section: Node {
+enum Fragment: Node {
     // the first screen right after the app starts
     case splash
 
-    // the screen that contains the login, register or forgot password sections
+    // the screen that contains the login, register or forgot password fragments
     case gatekeeper
-    // the three sections of the gatekeeper screen
+    // the three fragments of the gatekeeper screen
     case login
     case register
     case forgotPass
     
     // once the user is logged in, the dashboard is available
     case dashboard
-    // which has 2 sections
+    // which has 2 fragments
     case news
     case library
     
@@ -82,13 +82,13 @@ Conceptually, we now have:
   <img src="flow-no-segues.svg" />
 </p>
 
-Just a bunch of sections in our app, but with no navigation rules. In Helm, navigation rules are defined using segues and segues traits. Segues define the edges that connect the app sections and their direction, while traits add extra constraints for using relative navigation (it helps Helm understand what do we mean by `dismiss()` or `forward()`) and for disabling, redirecting or presenting overlapping nodes (more about this a bit later).
+Just a bunch of fragments in our app, but with no navigation rules. In Helm, navigation rules are defined using segues and segues traits. Segues define the edges that connect the app fragments and their direction, while traits add extra constraints for using relative navigation (it helps Helm understand what do we mean by `dismiss()` or `forward()`) and for disabling, redirecting or presenting overlapping nodes (more about this a bit later).
 
 We have to first define the segues. For that, we will use a `Flow` which is just an ordered collection of unique segues. Normally, we'd need to create and add each segue manually:
 
 ```swift
 // don't do this, use segue operators
-let flow = Flow<Section>(segue: Segue(.splash, to: .gatekeeper))
+let flow = Flow<Fragment>(segue: Segue(.splash, to: .gatekeeper))
     .add(segue: Segue(.splash, to: .dashboard))
     .add(segue: Segue(.gatekeeper, to: .login))
     .add(segue: Segue(.gatekeeper, to: .register))
@@ -104,17 +104,17 @@ Using the operators, the full flow definition becomes:
 ```swift
 // depending on whether the user is logged in or not, 
 // you can navigate from the .splash screen to the .gatekeeper or directly to the .dashboard
-let flow = Flow<Section>(segue: .splash => [.gatekeeper, .dashboard])
-    // the gatekeeper contains three sub-sections
+let flow = Flow<Fragment>(segue: .splash => [.gatekeeper, .dashboard])
+    // the gatekeeper contains three sub-fragments
     .add(segue: .gatekeeper => .login)
-    // from each of the gatekeeper sub-section you can navigate to the others
+    // from each of the gatekeeper sub-fragment you can navigate to the others
     .add(segue: .login <=> .register <=> .forgotPass <=> .login)
     // both from .login and .register you can reach the dashboard
     // if the login or the register operation succeeds  
     .add(segue: [.login, .register] => .dashboard)
-    // once in the dashboard, we can visit either the .news or the .library section
+    // once in the dashboard, we can visit either the .news or the .library fragment
     .add(segue: .dashboard => [.news, .library]) 
-    // also, you can go to the article section and back
+    // also, you can go to the article fragment and back
     .add(segue: .dashboard <=> .compose)
 ```
 
@@ -180,7 +180,7 @@ Finally, we use `isPresented(_ node:)` to hide or show a view when a node is pre
 
 ```swift
 struct DashboardView: View {
-    @EnvironmentObject private var nav: NavigationGraph<Section>
+    @EnvironmentObject private var nav: NavigationGraph<Fragment>
 
     var body: some View {
         VStack {
