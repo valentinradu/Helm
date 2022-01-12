@@ -9,29 +9,6 @@ import Collections
 import Foundation
 import SwiftUI
 
-private extension Set {
-    func presentedFragments<N: Fragment>(forPath path: OrderedSet<DirectedEdge<Element.N>>) -> OrderedSet<Element.N>
-        where Element == Segue<N>
-    {
-        var result: OrderedSet<Element.N> = []
-
-        for edge in path {
-            guard let segue = first(where: { $0.edge == edge }) else {
-                return []
-            }
-            switch segue.rule {
-            case .hold:
-                result.append(segue.to)
-            case .replace:
-                result.remove(segue.from)
-                result.append(segue.to)
-            }
-        }
-
-        return result
-    }
-}
-
 /// `Helm` holds all navigation rules between fragments in the app, plus the path that leads to the currently presented ones.
 public class Helm<N: Fragment>: ObservableObject {
     public typealias S = Segue<N>
@@ -41,7 +18,7 @@ public class Helm<N: Fragment>: ObservableObject {
     /// The currently presented fragments and the relationship between them.
     public private(set) var path: OrderedSet<DirectedEdge<N>> {
         didSet {
-            presentedFragments = nav.presentedFragments(forPath: path)
+            presentedFragments = calculatePresentedFragments()
         }
     }
 
@@ -58,10 +35,13 @@ public class Helm<N: Fragment>: ObservableObject {
                 path: OrderedSet<DirectedEdge<S.N>> = []) throws
     {
         self.errors = []
-        self.presentedFragments = nav.presentedFragments(forPath: path)
+        self.presentedFragments = []
         self.nav = nav
         self.path = path
+
         try validate()
+
+        self.presentedFragments = calculatePresentedFragments()
     }
 
     /// Presents a fragment.
@@ -139,6 +119,20 @@ public class Helm<N: Fragment>: ObservableObject {
         }
     }
 
+    /// Triggers a segue presenting its out node.
+    /// If possible, use one of the higher level present or dismiss methods instead.
+    public func present(edge: DirectedEdge<S.N>) throws {
+        guard let segue = nav.first(where: { $0.edge == edge }) else {
+            throw HelmError.missingSegueForEdge(edge)
+        }
+
+        guard presentedFragments.contains(segue.from) else {
+            throw HelmError<S>.fragmentNotPresented(segue.from)
+        }
+
+        path.append(edge)
+    }
+
     /// Dismisses a fragment.
     /// If the fragment is not already presented, the operation fails.
     /// If the fragment has no dismissable ingress segues, the operation fails.
@@ -194,20 +188,6 @@ public class Helm<N: Fragment>: ObservableObject {
         }
     }
 
-    /// Triggers a segue presenting its out node.
-    /// If possible, use one of the higher level present or dismiss methods instead.
-    public func present(edge: DirectedEdge<S.N>) throws {
-        guard let segue = nav.first(where: { $0.edge == edge }) else {
-            throw HelmError.missingSegueForEdge(edge)
-        }
-
-        guard presentedFragments.contains(segue.from) else {
-            throw HelmError<S>.fragmentNotPresented(segue.from)
-        }
-
-        path.append(edge)
-    }
-
     /// Triggers a segue dismissing its out node.
     /// If possible, use one of the higher level present or dismiss methods instead.
     public func dismiss(edge: DirectedEdge<S.N>) throws {
@@ -241,6 +221,12 @@ public class Helm<N: Fragment>: ObservableObject {
     /// - returns: True if the fragment is presented.
     public func isPresented(_ fragment: N) -> Bool {
         return presentedFragments.contains(fragment)
+    }
+
+    /// The entry section in the navigation graph.
+    /// The entry section is initially presented.
+    public var entry: S.N {
+        nav.inlets.map { $0.from }[0]
     }
 
     /// A special `isPresented(fragment:)` function that returns a binding.
@@ -289,5 +275,24 @@ public class Helm<N: Fragment>: ObservableObject {
         guard path.isSubset(of: nav.map { $0.edge }) else {
             throw HelmError.pathMismatch(Set(path))
         }
+    }
+
+    private func calculatePresentedFragments() -> OrderedSet<S.N> {
+        var result: OrderedSet<S.N> = [entry]
+
+        for edge in path {
+            guard let segue = nav.first(where: { $0.edge == edge }) else {
+                return []
+            }
+            switch segue.rule {
+            case .hold:
+                result.append(segue.to)
+            case .replace:
+                result.remove(segue.from)
+                result.append(segue.to)
+            }
+        }
+
+        return result
     }
 }

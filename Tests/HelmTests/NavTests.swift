@@ -16,7 +16,7 @@ private typealias TestGraph = Set<TestGraphSegue>
 private typealias TestGraphError = HelmError<TestGraphSegue>
 
 class NavTests: XCTestCase {
-    func testValidation() {
+    func testInitFail() {
         let emptyGraph = TestGraph([])
         XCTAssertThrowsError(try Helm(nav: emptyGraph),
                              TestGraphError.empty.localizedDescription)
@@ -45,23 +45,77 @@ class NavTests: XCTestCase {
                              TestGraphError.pathMismatch([.ac]).localizedDescription)
     }
     
-    func testPresent() throws {
-        let graph = TestGraph([.ab, .bc].dismissable())
-        let helm = try Helm(nav: graph, path: [.ab, .bc])
+    func testEntry() throws {
+        let graph = TestGraph([.ab, .ac, .ad])
+        let helm = try Helm(nav: graph)
+        XCTAssertEqual(helm.entry, .a)
+    }
+    
+    func testIsPresented() throws {
+        let graph = TestGraph([.ab].dismissable())
+        let helm = try Helm(nav: graph, path: [.ab])
         
-        XCTAssertTrue(helm.isPresented(.c))
-        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertTrue(helm.isPresented(.b))
+        XCTAssertFalse(helm.isPresented(.a))
         
-        let binding: Binding<Bool> = helm.isPresented(.c)
+        let binding: Binding<Bool> = helm.isPresented(.b)
         
         binding.wrappedValue = false
         
-        XCTAssertFalse(helm.isPresented(.c))
-        XCTAssertTrue(helm.isPresented(.b))
+        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertTrue(helm.isPresented(.a))
         
         binding.wrappedValue = true
         
-        XCTAssertTrue(helm.isPresented(.c))
-        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertTrue(helm.isPresented(.b))
+        XCTAssertFalse(helm.isPresented(.a))
+    }
+    
+    func testDismissEdgeFail() throws {
+        let nav = try Helm(nav: TestGraph([.ab] + [.ac].dismissable()), path: [.ab])
+        XCTAssertThrowsError(try nav.dismiss(edge: .db),
+                             TestGraphError.missingSegueForEdge(.db).localizedDescription)
+        XCTAssertThrowsError(try nav.dismiss(edge: .ab),
+                             TestGraphError.segueNotDismissable(.ab).localizedDescription)
+        XCTAssertThrowsError(try nav.dismiss(edge: .ac),
+                             TestGraphError.fragmentNotPresented(.c).localizedDescription)
+    }
+    
+    func testDismissEdge() throws {
+        let graph = TestGraph(
+            [.ab]
+                + [.bc].dismissable().rule(.hold)
+                + [.cd]
+        )
+        let nav = try Helm(nav: graph, path: [.ab, .bc, .cd])
+        
+        try nav.dismiss(edge: .bc)
+        
+        XCTAssertFalse(nav.isPresented(.a))
+        XCTAssertTrue(nav.isPresented(.b))
+        XCTAssertFalse(nav.isPresented(.d))
+        XCTAssertFalse(nav.isPresented(.c))
+        XCTAssertEqual(nav.path, [.ab])
+    }
+    
+    func testDismissLastFail() throws {
+        let graph = TestGraph([.ab] + [.bc].dismissable())
+        let nav = try Helm(nav: graph)
+        
+        nav.dismiss()
+        
+        XCTAssertTrue(nav.isPresented(.a))
+        XCTAssertEqual(nav.errors.count, 1)
+    }
+    
+    func testDismissLast() throws {
+        let graph = TestGraph([.ab] + [.bc].dismissable())
+        let nav = try Helm(nav: graph, path: [.ab, .bc])
+        
+        nav.dismiss()
+        
+        XCTAssertTrue(nav.isPresented(.b))
+        XCTAssertEqual(nav.path, [.ab])
+        XCTAssertEqual(nav.errors.count, 0)
     }
 }

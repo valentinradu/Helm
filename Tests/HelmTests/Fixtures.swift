@@ -83,4 +83,14 @@ extension Array where Element == Segue<TestNode> {
                   auto: $0.auto)
         }
     }
+    
+    func rule(_ rule: SeguePresentationRule) -> Self {
+        map {
+            Segue(from: $0.from,
+                  to: $0.to,
+                  rule: rule,
+                  dismissable: $0.dismissable,
+                  auto: $0.auto)
+        }
+    }
 }
