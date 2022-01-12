@@ -10,18 +10,21 @@ import Foundation
 import SwiftUI
 
 private extension Set {
-    func presentedFragments<N: Fragment>(forPath path: OrderedSet<Element>) -> OrderedSet<Element.N>
+    func presentedFragments<N: Fragment>(forPath path: OrderedSet<DirectedEdge<Element.N>>) -> OrderedSet<Element.N>
         where Element == Segue<N>
     {
         var result: OrderedSet<Element.N> = []
 
-        for leg in path {
-            switch leg.rule {
+        for edge in path {
+            guard let segue = first(where: { $0.edge == edge }) else {
+                return []
+            }
+            switch segue.rule {
             case .hold:
-                result.append(leg.to)
+                result.append(segue.to)
             case .replace:
-                result.remove(leg.from)
-                result.append(leg.to)
+                result.remove(segue.from)
+                result.append(segue.to)
             }
         }
 
@@ -36,7 +39,7 @@ public class Helm<N: Fragment>: ObservableObject {
     public let nav: Set<S>
 
     /// The currently presented fragments and the relationship between them.
-    public private(set) var path: OrderedSet<Segue<N>> {
+    public private(set) var path: OrderedSet<DirectedEdge<N>> {
         didSet {
             presentedFragments = nav.presentedFragments(forPath: path)
         }
@@ -52,10 +55,10 @@ public class Helm<N: Fragment>: ObservableObject {
     /// - parameter nav: A directed graph of segues that defies all the navigation rules between fragments in the app.
     /// - parameter path: The path that leads to the currently presented fragments.
     public init(nav: Set<S>,
-                path: OrderedSet<S> = []) throws
+                path: OrderedSet<DirectedEdge<S.N>> = []) throws
     {
-        errors = []
-        presentedFragments = nav.presentedFragments(forPath: path)
+        self.errors = []
+        self.presentedFragments = nav.presentedFragments(forPath: path)
         self.nav = nav
         self.path = path
         try validate()
@@ -70,7 +73,7 @@ public class Helm<N: Fragment>: ObservableObject {
         do {
             if presentedFragments.isEmpty {
                 let segue = try nav.inlets.uniqueIngressEdge(for: fragment)
-                try present(segue: segue)
+                try present(edge: segue.edge)
             } else {
                 let segues = presentedFragments
                     .reversed()
@@ -82,7 +85,7 @@ public class Helm<N: Fragment>: ObservableObject {
                     throw HelmError<S>.missingEgressEdges(from: fragment)
                 }
 
-                try present(segue: segue)
+                try present(edge: segue.edge)
             }
         } catch {
             errors.append(error)
@@ -107,7 +110,7 @@ public class Helm<N: Fragment>: ObservableObject {
                 throw HelmError<S>.missingTaggedSegue(name: AnyHashable(tag))
             }
 
-            try present(segue: last)
+            try present(edge: last.edge)
         } catch {
             errors.append(error)
         }
@@ -120,7 +123,7 @@ public class Helm<N: Fragment>: ObservableObject {
         do {
             if let fragment = presentedFragments.last {
                 let segue = try nav.uniqueEgressEdge(for: fragment)
-                try present(segue: segue)
+                try present(edge: segue.edge)
             } else {
                 let segues = nav.inlets
 
@@ -129,7 +132,7 @@ public class Helm<N: Fragment>: ObservableObject {
                 }
 
                 let segue = segues.first!
-                try present(segue: segue)
+                try present(edge: segue.edge)
             }
         } catch {
             errors.append(error)
@@ -156,7 +159,7 @@ public class Helm<N: Fragment>: ObservableObject {
             }
 
             let segue = segues.first!
-            try dismiss(segue: segue)
+            try dismiss(edge: segue.edge)
         } catch {
             errors.append(error)
         }
@@ -171,7 +174,7 @@ public class Helm<N: Fragment>: ObservableObject {
                 throw HelmError<S>.missingTaggedSegue(name: AnyHashable(tag))
             }
 
-            try dismiss(segue: segue)
+            try dismiss(edge: segue.edge)
         } catch {
             errors.append(error)
         }
@@ -181,11 +184,11 @@ public class Helm<N: Fragment>: ObservableObject {
     /// The operation fails if the fragment has no dismissable ingress segue.
     public func dismiss() {
         do {
-            guard let segue = path.last else {
+            guard let edge = path.last else {
                 throw HelmError<S>.emptyPath
             }
 
-            try dismiss(segue: segue)
+            try dismiss(edge: edge)
         } catch {
             errors.append(error)
         }
@@ -193,30 +196,30 @@ public class Helm<N: Fragment>: ObservableObject {
 
     /// Triggers a segue presenting its out node.
     /// If possible, use one of the higher level present or dismiss methods instead.
-    public func present(segue: S) throws {
-        guard nav.has(edge: segue) else {
-            throw HelmError.missingSegue(segue)
+    public func present(edge: DirectedEdge<S.N>) throws {
+        guard let segue = nav.first(where: { $0.edge == edge }) else {
+            throw HelmError.missingSegueForEdge(edge)
         }
 
         guard presentedFragments.contains(segue.from) else {
             throw HelmError<S>.fragmentNotPresented(segue.from)
         }
 
-        path.append(segue)
+        path.append(edge)
     }
 
     /// Triggers a segue dismissing its out node.
     /// If possible, use one of the higher level present or dismiss methods instead.
-    public func dismiss(segue: S) throws {
-        guard nav.has(edge: segue) else {
-            throw HelmError.missingSegue(segue)
+    public func dismiss(edge: DirectedEdge<S.N>) throws {
+        guard let segue = nav.first(where: { $0.edge == edge }) else {
+            throw HelmError.missingSegueForEdge(edge)
         }
 
         guard segue.dismissable else {
             throw HelmError<S>.segueNotDismissable(segue)
         }
 
-        guard path.contains(segue) else {
+        guard path.contains(edge) else {
             throw HelmError<S>.fragmentNotPresented(segue.from)
         }
 
@@ -265,9 +268,26 @@ public class Helm<N: Fragment>: ObservableObject {
             throw HelmError<S>.missingInlets
         }
 
+        guard Set(nav.inlets.map { $0.from }).count == 1 else {
+            throw HelmError<S>.ambiguousInlets
+        }
+
+        var edgeToSegue: [DirectedEdge<S.N>: S] = [:]
+
+        for segue in nav {
+            if let other = edgeToSegue[segue.edge] {
+                throw HelmError.oneEdgeToManySegues([other, segue])
+            }
+            edgeToSegue[segue.edge] = segue
+        }
+
         let autoSegues = Set(nav.filter { $0.auto })
         if autoSegues.hasCycle {
             throw HelmError.autoCycleDetected(autoSegues)
+        }
+
+        guard path.isSubset(of: nav.map { $0.edge }) else {
+            throw HelmError.pathMismatch(Set(path))
         }
     }
 }

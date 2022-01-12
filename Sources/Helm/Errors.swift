@@ -11,14 +11,17 @@ public enum HelmError<E: DirectedConnectable>: Error {
     case empty
     case emptyPath
     case missingInlets
+    case ambiguousInlets
     case ambiguousForwardInlets
+    case oneEdgeToManySegues(Set<E>)
     case autoCycleDetected(Set<E>)
+    case pathMismatch(Set<E>)
     case ambiguousAutoSegues(Set<E>)
     case missingTaggedSegue(name: AnyHashable)
     case fragmentNotPresented(E.N)
     case fragmentMissingDismissableSegue(E.N)
     case segueNotDismissable(E)
-    case missingSegue(E)
+    case missingSegueForEdge(E)
     case ambiguousEgressEdges(Set<E>, from: E.N)
     case ambiguousIngressEdges(Set<E>, to: E.N)
     case missingEgressEdges(from: E.N)
@@ -46,8 +49,8 @@ extension HelmError: LocalizedError {
             return "\(fragment) has no dismissable ingress segue."
         case .emptyPath:
             return "Navigation path is empty."
-        case let .missingSegue(segue):
-            return "Navigation graph doesn't contain \(segue)"
+        case let .missingSegueForEdge(edge):
+            return "Navigation graph doesn't contain \(edge)"
         case let .ambiguousEgressEdges(edges, node):
             return "Unable to solve ambiguity. (\(node) has multiple egress segues candidates: (\(edges))."
         case let .ambiguousIngressEdges(edges, node):
@@ -58,6 +61,12 @@ extension HelmError: LocalizedError {
             return "Missing ingress segues towards \(node)."
         case let .segueNotDismissable(segue):
             return "\(segue) is not dismissable."
+        case let .pathMismatch(path):
+            return "\(path) does not match any valid path in the navigation graph."
+        case .ambiguousInlets:
+            return "The navigation graph should only have one entry point."
+        case let .oneEdgeToManySegues(segues):
+            return "Multiple segues (\(segues)) define the edge between the same nodes."
         }
     }
 }

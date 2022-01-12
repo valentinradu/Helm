@@ -7,6 +7,7 @@
 
 import Collections
 import Foundation
+import OrderedCollections
 
 /// A node in the graph
 public protocol Node: Hashable, Comparable {}
@@ -190,7 +191,7 @@ public extension EdgeCollection where Element: DirectedConnectable {
         Set(flatMap { [$0.from, $0.to] })
     }
 
-    var disconnectedSubgraphs: OrderedSet<Set<Element>> {
+    var disconnectedSubgraphs: Set<Set<Element>> {
         var labels: [Element: Int] = [:]
         var currentLabel = 0
 
@@ -210,7 +211,7 @@ public extension EdgeCollection where Element: DirectedConnectable {
                 Set($0.map { $0.key })
             }
 
-        return OrderedSet(result)
+        return Set(result)
     }
 
     /// Iterates through the entire graph or a fragment of it (starting at a given node) depth first. Edges leading to the same node are iterated.
