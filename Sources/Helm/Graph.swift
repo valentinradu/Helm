@@ -9,10 +9,10 @@ import Collections
 import Foundation
 
 /// A node in the graph
-public protocol Node: Hashable {}
+public protocol Node: Hashable, Comparable {}
 
 /// The directed relationship between two nodes.
-public protocol DirectedConnectable: Hashable, CustomDebugStringConvertible {
+public protocol DirectedConnectable: Hashable, Comparable, CustomDebugStringConvertible {
     associatedtype N: Node
     /// The input node
     var from: N { get }
@@ -23,6 +23,16 @@ public protocol DirectedConnectable: Hashable, CustomDebugStringConvertible {
 public extension CustomDebugStringConvertible where Self: DirectedConnectable {
     var debugDescription: String {
         return "\(from) -> \(to)"
+    }
+}
+
+public extension Comparable where Self: DirectedConnectable {
+    static func < (lhs: Self, rhs: Self) -> Bool {
+        if lhs.from == rhs.from {
+            return lhs.to < rhs.to
+        } else {
+            return lhs.from < rhs.from
+        }
     }
 }
 
@@ -58,14 +68,42 @@ public extension EdgeCollection where Element: DirectedConnectable {
 
     // Detect if the graph has cycles
     var hasCycle: Bool {
-        var visited: Set<Element.N> = []
-        for segue in dfs() {
-            if visited.contains(segue.to) {
-                return true
-            } else {
-                visited.insert(segue.to)
+        var visited: Set<Element> = []
+        
+        
+        guard count > 0 else {
+            return false
+        }
+        
+        guard inlets.count > 0 else {
+            return true
+        }
+
+        for entry in inlets {
+            var stack: [Element] = [entry]
+
+            while let edge = stack.last {
+                visited.insert(edge)
+
+                let nextEdges =
+                    filter { $0.from == edge.to && !visited.contains($0) }
+                        .sorted()
+                
+                let stackNodes = Set(stack.flatMap { [$0.from, $0.to] })
+                let nextEdgesNodes = Set(nextEdges.map { $0.to })
+                
+                if !stackNodes.isDisjoint(with: nextEdgesNodes) {
+                    return true
+                }
+
+                if let nextEdge = nextEdges.first {
+                    stack.append(nextEdge)
+                } else {
+                    stack.removeLast()
+                }
             }
         }
+
         return false
     }
 
@@ -189,16 +227,19 @@ public extension EdgeCollection where Element: DirectedConnectable {
             return []
         }
 
-        for entry in entries {
+        for entry in entries.sorted() {
             var stack: [Element] = [entry]
 
             while let edge = stack.last {
-                let nextEdges = filter {
-                    $0.from == edge.to && !visited.contains($0)
-                }
+                visited.append(edge)
+
+                let nextEdges =
+                    filter {
+                        $0.from == edge.to && !visited.contains($0)
+                    }
+                    .sorted()
 
                 if let nextEdge = nextEdges.first {
-                    visited.append(nextEdge)
                     stack.append(nextEdge)
                 } else {
                     stack.removeLast()

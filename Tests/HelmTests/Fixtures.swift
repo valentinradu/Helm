@@ -8,6 +8,9 @@
 import Foundation
 import Helm
 
+typealias TestGraphEdge = DirectedEdge<TestNode>
+typealias TestGraph = Set<TestGraphEdge>
+
 enum TestNode: Fragment {
     case a
     case b
