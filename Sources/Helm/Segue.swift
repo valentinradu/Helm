@@ -13,6 +13,8 @@ public protocol Fragment: Node {}
 /// A handler used in segue queries.
 public protocol SegueTag: Hashable {}
 
+extension AnyHashable: SegueTag {}
+
 /// Segues are the edges between the navigation graph's fragments.
 public struct Segue<N: Fragment>: DirectedConnectable, Equatable {
     /// The input fragment
@@ -50,7 +52,7 @@ public struct Segue<N: Fragment>: DirectedConnectable, Equatable {
         self.tag = nil
     }
 
-    public init<T: SegueTag>(_ in: N,
+    public init<T: SegueTag>(from in: N,
                              to out: N,
                              rule: SeguePresentationRule = .replace,
                              dismissable: Bool = false,
@@ -63,6 +65,46 @@ public struct Segue<N: Fragment>: DirectedConnectable, Equatable {
         self.dismissable = dismissable
         self.auto = auto
         self.tag = tag
+    }
+
+    /// Returns a modified auto copy of the segue.
+    public func makeAuto() -> Self {
+        Segue(from: from,
+              to: to,
+              rule: rule,
+              dismissable: dismissable,
+              auto: true,
+              tag: tag)
+    }
+    
+    /// Returns a modified dismissable copy of the segue.
+    public func makeDismissable() -> Self {
+        Segue(from: from,
+              to: to,
+              rule: rule,
+              dismissable: true,
+              auto: auto,
+              tag: tag)
+    }
+
+    /// Returns a modified copy of the segue, setting the tag.
+    public func with<T: SegueTag>(tag: T) -> Self {
+        Segue(from: from,
+              to: to,
+              rule: rule,
+              dismissable: dismissable,
+              auto: auto,
+              tag: tag)
+    }
+    
+    /// Returns a modified copy of the segue, setting the presentation rule.
+    public func with(rule: SeguePresentationRule) -> Self {
+        Segue(from: from,
+              to: to,
+              rule: rule,
+              dismissable: dismissable,
+              auto: auto,
+              tag: tag)
     }
 }
 

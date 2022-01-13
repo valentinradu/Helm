@@ -59,6 +59,8 @@ public extension EdgeCollection where Element: Hashable {
 }
 
 public extension EdgeCollection where Element: DirectedConnectable {
+    private typealias Error = DirectedEdgeCollectionError<Element>
+
     /// Checks if the graph has a specific node.
     /// - parameter node: The node to search for
     func has(node: Element.N) -> Bool {
@@ -133,10 +135,10 @@ public extension EdgeCollection where Element: DirectedConnectable {
     func uniqueEgressEdge(for node: Element.N) throws -> Element {
         let edges = egressEdges(for: node)
         guard edges.count > 0 else {
-            throw HelmError<Element>.missingEgressEdges(from: node)
+            throw Error.missingEgressEdges(from: node)
         }
         guard edges.count == 1 else {
-            throw HelmError<Element>.ambiguousEgressEdges(edges, from: node)
+            throw Error.ambiguousEgressEdges(edges, from: node)
         }
         return edges.first!
     }
@@ -163,10 +165,10 @@ public extension EdgeCollection where Element: DirectedConnectable {
     func uniqueIngressEdge(for node: Element.N) throws -> Element {
         let edges = ingressEdges(for: node)
         guard edges.count > 0 else {
-            throw HelmError<Element>.missingIngressEdges(to: node)
+            throw Error.missingIngressEdges(to: node)
         }
         guard edges.count == 1 else {
-            throw HelmError<Element>.ambiguousIngressEdges(edges, to: node)
+            throw Error.ambiguousIngressEdges(edges, to: node)
         }
         return edges.first!
     }

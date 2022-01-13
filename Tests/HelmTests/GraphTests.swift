@@ -10,6 +10,7 @@ import XCTest
 
 private typealias TestGraphEdge = DirectedEdge<TestNode>
 private typealias TestGraph = Set<TestGraphEdge>
+private typealias TestError = DirectedEdgeCollectionError<TestGraphEdge>
 
 class GraphTests: XCTestCase {
     func testPrintEdge() {
@@ -56,12 +57,12 @@ class GraphTests: XCTestCase {
         XCTAssertEqual(graph.egressEdges(for: [.a, .b, .c]), [.ab, .bc, .bd, .ba])
         XCTAssertEqual(try! graph.uniqueEgressEdge(for: .a), .ab)
         
-        let ambiguousError = HelmError<TestGraphEdge>.ambiguousEgressEdges([.bc, .bd, .ba],
-                                                                           from: .b)
+        let ambiguousError = TestError.ambiguousEgressEdges([.bc, .bd, .ba],
+                                                            from: .b)
         XCTAssertThrowsError(try graph.uniqueEgressEdge(for: .b),
                              ambiguousError.localizedDescription)
         
-        let missingError = HelmError<TestGraphEdge>.missingEgressEdges(from: .d)
+        let missingError = TestError.missingEgressEdges(from: .d)
         XCTAssertThrowsError(try graph.uniqueEgressEdge(for: .d),
                              missingError.localizedDescription)
     }
@@ -71,12 +72,12 @@ class GraphTests: XCTestCase {
         XCTAssertEqual(graph.ingressEdges(for: .b), [.ab, .cb, .db])
         XCTAssertEqual(graph.ingressEdges(for: [.a, .b, .c]), [.ab, .cb, .db, .ba])
         
-        let ambiguousError = HelmError<TestGraphEdge>.ambiguousIngressEdges([.ab, .cb, .db],
-                                                                            to: .b)
+        let ambiguousError = TestError.ambiguousIngressEdges([.ab, .cb, .db],
+                                                             to: .b)
         XCTAssertThrowsError(try graph.uniqueIngressEdge(for: .b),
                              ambiguousError.localizedDescription)
         
-        let missingError = HelmError<TestGraphEdge>.missingIngressEdges(to: .d)
+        let missingError = TestError.missingIngressEdges(to: .d)
         XCTAssertThrowsError(try graph.uniqueIngressEdge(for: .d),
                              missingError.localizedDescription)
     }

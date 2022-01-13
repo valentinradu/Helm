@@ -66,31 +66,21 @@ extension Segue where N == TestNode {
 }
 
 extension Array where Element == Segue<TestNode> {
-    func auto() -> Self {
+    func makeAuto() -> Self {
         map {
-            Segue(from: $0.from,
-                  to: $0.to,
-                  dismissable: $0.dismissable,
-                  auto: true)
+            $0.makeAuto()
         }
     }
     
-    func dismissable() -> Self {
+    func makeDismissable() -> Self {
         map {
-            Segue(from: $0.from,
-                  to: $0.to,
-                  dismissable: true,
-                  auto: $0.auto)
+            $0.makeDismissable()
         }
     }
     
-    func rule(_ rule: SeguePresentationRule) -> Self {
+    func with(rule: SeguePresentationRule) -> Self {
         map {
-            Segue(from: $0.from,
-                  to: $0.to,
-                  rule: rule,
-                  dismissable: $0.dismissable,
-                  auto: $0.auto)
+            $0.with(rule: rule)
         }
     }
 }
