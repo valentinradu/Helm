@@ -31,6 +31,67 @@ public struct Segue<N: Fragment>: DirectedConnectable, Equatable {
     /// A tag identifying the segue.
     public let tag: AnyHashable?
 
+    /// Creates a segue from the origin and the destination fragments.
+    public static func from(_ from: N,
+                            to: N,
+                            rule: SeguePresentationRule = .replace,
+                            dismissable: Bool = false,
+                            auto: Bool = false) -> Self
+    {
+        Segue(from: from,
+              to: to,
+              rule: rule,
+              dismissable: dismissable,
+              auto: auto)
+    }
+
+    /// Creates multiple segues from an origin and multiple destination fragments.
+    public static func from(_ from: N,
+                            to: [N],
+                            rule: SeguePresentationRule = .replace,
+                            dismissable: Bool = false,
+                            auto: Bool = false) -> Set<Self>
+    {
+        Set(to.map {
+            Segue(from: from,
+                  to: $0,
+                  rule: rule,
+                  dismissable: dismissable,
+                  auto: auto)
+        })
+    }
+
+    /// Creates multiple segues by chaining multiple fragments.
+    /// If only one fragment is provided, the resulting segue will be a short-circuit loop.
+    public static func chain(_ fragments: [N],
+                             rule: SeguePresentationRule = .replace,
+                             dismissable: Bool = false,
+                             auto: Bool = false) -> Set<Self>
+    {
+        guard fragments.count > 0 else {
+            return []
+        }
+
+        guard fragments.count > 1 else {
+            return [Segue(from: fragments[0],
+                          to: fragments[0],
+                          rule: rule,
+                          dismissable: dismissable,
+                          auto: auto)]
+        }
+
+        var result = Set<Self>()
+        for (a, b) in zip(fragments, fragments.dropFirst()) {
+            result.insert(Segue(from: a,
+                                to: b,
+                                rule: rule,
+                                dismissable: dismissable,
+                                auto: auto))
+        }
+
+        return result
+    }
+
     /// Initializes a new segue.
     /// - parameter from: The input fragment (origin fragment)
     /// - parameter to: The output fragment (destination fragment)
@@ -76,7 +137,7 @@ public struct Segue<N: Fragment>: DirectedConnectable, Equatable {
               auto: true,
               tag: tag)
     }
-    
+
     /// Returns a modified dismissable copy of the segue.
     public func makeDismissable() -> Self {
         Segue(from: from,
@@ -96,7 +157,7 @@ public struct Segue<N: Fragment>: DirectedConnectable, Equatable {
               auto: auto,
               tag: tag)
     }
-    
+
     /// Returns a modified copy of the segue, setting the presentation rule.
     public func with(rule: SeguePresentationRule) -> Self {
         Segue(from: from,

@@ -118,25 +118,15 @@ public class Helm<N: Fragment>: ObservableObject {
     /// If the fragment has no segue, the operation fails
     public func forward() {
         do {
-            if let fragment = presentedFragments.last {
-                let segue: Segue<N>
-                do {
-                    segue = try nav.uniqueEgressEdge(for: fragment)
-                } catch {
-                    throw ConcreteHelmError.ambiguousForwardFromFragment(fragment)
-                }
-
-                try present(edge: segue.edge)
-            } else {
-                let segues = nav.inlets
-
-                guard segues.count == 1 else {
-                    throw ConcreteHelmError.ambiguousForwardFromFragment(entry)
-                }
-
-                let segue = segues.first!
-                try present(edge: segue.edge)
+            let fragment = try presentedFragments.last.unwrap()
+            let segue: Segue<N>
+            do {
+                segue = try nav.uniqueEgressEdge(for: fragment)
+            } catch {
+                throw ConcreteHelmError.ambiguousForwardFromFragment(fragment)
             }
+
+            try present(edge: segue.edge)
         } catch {
             errors.append(error)
         }
@@ -169,11 +159,10 @@ public class Helm<N: Fragment>: ObservableObject {
                         .filter { $0.dismissable }
                 }
 
-            guard segues.count > 0 else {
+            guard let segue = segues.first else {
                 throw ConcreteHelmError.fragmentMissingDismissableSegue(fragment)
             }
 
-            let segue = segues.first!
             try dismiss(edge: segue.edge)
         } catch {
             errors.append(error)

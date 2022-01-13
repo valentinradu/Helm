@@ -49,39 +49,20 @@ enum KeyScreen: Fragment {
 extension Helm where N == KeyScreen {
     static var main: Helm<N> = {
         do {
-            let graph = try Helm(nav: [])
-            
-//            // from `.splash` (initial loading screen) to any of the
-//            // `.gatekeeper`, `.onboarding`, `.dashboard` screens,
-//            // depending on the app state (user logged in, onboarded etc)
-//            let flow = Flow<KeyScreen>(segue: .splash => [.gatekeeper, .onboarding, .dashboard])
-//                // from `.gatekeeper` (the authentication-related screen),
-//                // to any of the `.login`, `.register` or `.forgotPass`, depending
-//                // on user navigation. We'll later on set the default screen to `.login`
-//                // using a redirect segue trait
-//                .add(segue: .gatekeeper => [.login, .register, .forgotPass])
-//                // like in many authentication screens, we can freely navigate between
-//                // `.login`, `.register` and `.forgotPass` (from any to any)
-//                .add(segue: .login <=> .register <=> .forgotPass <=> .login)
-//                // we can freely navigate between the onboarding screens, however, we can't return to the root `.onboarding` parent screen
-//                .add(segue: .onboarding => .onboardingUsername <=> .onboardingTutorial <=> .onboardingPrivacyPolicy => .dashboard)
-//                // when logging out, we move from `.dashboard` back to the `.gatekeeper`
-//                .add(segue: .dashboard => .gatekeeper)
-//                // from `.dashboard` we can access any of it's tabs:
-//                // `.library`, `.news`, `.settings`
-//                .add(segue: .dashboard => [.library, .news, .settings])
-//                // but also, since this is a tabbed navigation,
-//                // we can reach any of the screens from the others
-//                .add(segue: .library <=> .news <=> .settings <=> .library)
-//                // also, you can navigate to the article details and back
-//                .add(segue: .library <=> .article)
-//                // we can reach the compose modal from the dashboard
-//                .add(segue: .dashboard <=> .compose)
-//                // settings is a list, you can navigate from the
-//                // root to any of the items and back
-//                .add(segue: .settings <=> [.updateAvatar, .updateBio, .updateUsername])
-//
-            return graph
+            var graph = Set<Segue<KeyScreen>>()
+
+            graph.formUnion(Segue.from(.splash,
+                                       to: [.onboarding, .gatekeeper, .dashboard]))
+            graph.insert(.from(.gatekeeper,
+                               to: .login,
+                               rule: .hold,
+                               auto: true))
+            graph.formUnion(Segue.from(.gatekeeper,
+                                       to: [.register, .forgotPass],
+                                       rule: .hold))
+            graph.formUnion(Segue.chain([.login, .register, .forgotPass]))
+
+            return try Helm(nav: graph)
         } catch {
             assertionFailure(error.localizedDescription)
             fatalError()

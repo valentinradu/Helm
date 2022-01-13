@@ -26,8 +26,8 @@ public enum HelmError<N: Fragment>: Equatable, Error {
     case segueNotDismissable(Segue<N>)
 }
 
-extension HelmError: LocalizedError {
-    public var errorDescription: String? {
+extension HelmError: CustomStringConvertible {
+    public var description: String {
         switch self {
         case .empty:
             return "The navigation graph is empty."
@@ -72,8 +72,8 @@ public enum DirectedEdgeCollectionError<E: DirectedConnectable>: Equatable, Erro
     case missingIngressEdges(to: E.N)
 }
 
-extension DirectedEdgeCollectionError: LocalizedError {
-    public var errorDescription: String? {
+extension DirectedEdgeCollectionError: CustomStringConvertible {
+    public var description: String {
         switch self {
         case let .ambiguousEgressEdges(edges, node):
             return "Unable to solve ambiguity. (\(node) has multiple egress edges candidates: (\(edges))."
