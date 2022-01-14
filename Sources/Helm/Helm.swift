@@ -11,34 +11,35 @@ import SwiftUI
 
 /// `Helm` holds the navigation rules plus the path that leads to the currently presented fragments.
 public class Helm<N: Fragment>: ObservableObject {
-    public typealias Graph = Set<Segue<N>>
-    public typealias Edge = DirectedEdge<N>
-    public typealias Path = OrderedSet<Edge>
-    public typealias Fragments = OrderedSet<N>
+    public typealias HelmSegue = Segue<N>
+    public typealias HelmGraph = Set<HelmSegue>
+    public typealias HelmEdge = DirectedEdge<N>
+    public typealias HelmPath = OrderedSet<HelmEdge>
+    public typealias HelmFragments = OrderedSet<N>
     private typealias ConcreteHelmError = HelmError<N>
     /// The navigation graph describes all the navigation rules in the app.
-    public let nav: Graph
+    public let nav: HelmGraph
 
     /// The path that leads to the currently presented fragments.
-    public private(set) var path: Path {
+    public private(set) var path: HelmPath {
         didSet {
             presentedFragments = calculatePresentedFragments()
         }
     }
 
     /// The presented fragments.
-    @Published public private(set) var presentedFragments: Fragments
+    @Published public private(set) var presentedFragments: HelmFragments
 
     /// All the errors triggered by navigating the graph.
     @Published public private(set) var errors: [Swift.Error]
 
-    private let edgeToSegueMap: [Edge: Segue<N>]
+    private let edgeToSegueMap: [HelmEdge: HelmSegue]
 
     /// Initializes a new Helm instance.
     /// - parameter nav: A directed graph of segues that defies all the navigation rules in the app.
     /// - parameter path: The path that leads to the currently presented fragments.
-    public init(nav: Graph,
-                path: Path = []) throws
+    public init(nav: HelmGraph,
+                path: HelmPath = []) throws
     {
         self.errors = []
         self.presentedFragments = []
@@ -63,7 +64,7 @@ public class Helm<N: Fragment>: ObservableObject {
     public func present(fragment: N) {
         do {
             if path.isEmpty {
-                let segue: Segue<N>
+                let segue: HelmSegue
                 do {
                     segue = try nav.inlets.uniqueIngressEdge(for: fragment)
                 } catch {
@@ -119,7 +120,7 @@ public class Helm<N: Fragment>: ObservableObject {
     public func forward() {
         do {
             let fragment = try presentedFragments.last.unwrap()
-            let segue: Segue<N>
+            let segue: HelmSegue
             do {
                 segue = try nav.uniqueEgressEdge(for: fragment)
             } catch {
@@ -134,7 +135,7 @@ public class Helm<N: Fragment>: ObservableObject {
 
     /// Triggers a segue presenting its out node.
     /// If possible, use one of the higher level present or dismiss methods instead.
-    public func present(edge: Edge) throws {
+    public func present(edge: HelmEdge) throws {
         let segue = try segue(for: edge)
 
         guard presentedFragments.contains(segue.from) else {
@@ -204,7 +205,7 @@ public class Helm<N: Fragment>: ObservableObject {
 
     /// Triggers a segue dismissing its out node.
     /// If possible, use one of the higher level present or dismiss methods instead.
-    public func dismiss(edge: Edge) throws {
+    public func dismiss(edge: HelmEdge) throws {
         guard let segue = nav.first(where: { $0.edge == edge }) else {
             throw ConcreteHelmError.missingSegueForEdge(edge)
         }
@@ -262,7 +263,7 @@ public class Helm<N: Fragment>: ObservableObject {
     /// Returns the segue with the given edge, if any.
     /// - parameter edge: The edge
     /// - throws: Throws if no segue can be found for the edge.
-    public func segue(for edge: Edge) throws -> Segue<N> {
+    public func segue(for edge: HelmEdge) throws -> HelmSegue {
         if let segue = edgeToSegueMap[edge] {
             return segue
         }
@@ -282,7 +283,7 @@ public class Helm<N: Fragment>: ObservableObject {
             throw ConcreteHelmError.ambiguousInlets
         }
 
-        var edgeToSegue: [Edge: Segue<N>] = [:]
+        var edgeToSegue: [HelmEdge: HelmSegue] = [:]
 
         for segue in nav {
             if let other = edgeToSegue[segue.edge] {
@@ -301,8 +302,8 @@ public class Helm<N: Fragment>: ObservableObject {
         }
     }
 
-    private func calculatePresentedFragments() -> Fragments {
-        var result: Fragments = [entry]
+    private func calculatePresentedFragments() -> HelmFragments {
+        var result: HelmFragments = [entry]
 
         for edge in path {
             guard let segue = nav.first(where: { $0.edge == edge }) else {

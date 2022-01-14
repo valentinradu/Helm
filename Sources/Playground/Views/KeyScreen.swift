@@ -25,7 +25,6 @@ enum KeyScreen: Fragment {
     case onboarding
     case onboardingUsername
     case onboardingTutorial
-    case onboardingPrivacyPolicy
 
     // visible if the logged in user
     // finished the onboarding process
@@ -49,20 +48,36 @@ enum KeyScreen: Fragment {
 extension Helm where N == KeyScreen {
     static var main: Helm<N> = {
         do {
-            var graph = Set<Segue<KeyScreen>>()
+            let edges = Set<DirectedEdge<KeyScreen>>()
+                .union(.splash => [.gatekeeper, .onboarding, .dashboard])
+                .union(.gatekeeper => [.onboarding, .dashboard])
+                .union([.onboarding => .dashboard])
+                .union(.gatekeeper => [.login, .register, .forgotPass])
+                .union(.login => .register => .forgotPass => .login)
+                .union(.login => .forgotPass => .register => .login)
+                .union(.onboarding => .onboardingUsername => .onboardingTutorial)
+                .union(.dashboard => [.library, .news, .settings, .compose])
+                .union(.library => .news => .settings => .library)
+                .union(.library => .settings => .news => .library)
+                .union(.settings => [.updateAvatar, .updateBio, .updateUsername])
 
-            graph.formUnion(Segue.from(.splash,
-                                       to: [.onboarding, .gatekeeper, .dashboard]))
-            graph.insert(.from(.gatekeeper,
-                               to: .login,
-                               rule: .hold,
-                               auto: true))
-            graph.formUnion(Segue.from(.gatekeeper,
-                                       to: [.register, .forgotPass],
-                                       rule: .hold))
-            graph.formUnion(Segue.chain([.login, .register, .forgotPass]))
-
-            return try Helm(nav: graph)
+            let segues = Set(edges.map { (edge: DirectedEdge<KeyScreen>) -> Segue<KeyScreen> in
+                switch edge {
+                case .gatekeeper => .login:
+                    return Segue(edge, rule: .hold, auto: true)
+                case .gatekeeper => .register, .gatekeeper => .forgotPass:
+                    return Segue(edge, rule: .hold)
+                case .dashboard => .news:
+                    return Segue(edge, rule: .hold, auto: true)
+                case .dashboard => .compose:
+                    return Segue(edge, rule: .hold, dismissable: true)
+                case .dashboard => .library, .dashboard => .news:
+                    return Segue(edge, rule: .hold)
+                default:
+                    return Segue(edge)
+                }
+            })
+            return try Helm(nav: segues)
         } catch {
             assertionFailure(error.localizedDescription)
             fatalError()

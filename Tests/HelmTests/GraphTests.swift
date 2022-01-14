@@ -127,4 +127,39 @@ class GraphTests: XCTestCase {
         XCTAssertEqual(graph.dfs(),
                        [.ab, .ac, .cd, .de, .df, .dg, .ch, .hf, .hj, .jg])
     }
+    
+    func testOTONodeOperator() {
+        let edge: DirectedEdge<TestNode> = .a => .b
+        XCTAssertEqual(edge, .ab)
+    }
+    
+    func testOTMNodeOperator() {
+        let edges: Set<DirectedEdge<TestNode>> = .a => [.b, .c]
+        XCTAssertEqual(edges, [.ab, .ac])
+    }
+    
+    func testMTONodeOperator() {
+        let edges: Set<DirectedEdge<TestNode>> = [.b, .c] => .d
+        XCTAssertEqual(edges, [.bd, .cd])
+    }
+    
+    func testOTOEdgeOperator() {
+        let edges: Set<DirectedEdge<TestNode>> = .a => .b => .c
+        XCTAssertEqual(edges, [.ab, .bc])
+    }
+    
+    func testMTOEdgeOperator() {
+        let edges: Set<DirectedEdge<TestNode>> = .a => [.b, .c] => .d
+        XCTAssertEqual(edges, [.ab, .ac, .bd, .cd])
+    }
+    
+    func testOTMEdgeOperator() {
+        let edges: Set<DirectedEdge<TestNode>> = .a => .b => [.c, .d]
+        XCTAssertEqual(edges, [.ab, .bc, .bd])
+    }
+    
+    func testMTMEdgeOperator() {
+        let edges: Set<DirectedEdge<TestNode>> = .a => [.b, .c] => [.d, .e]
+        XCTAssertEqual(edges, [.ab, .ac, .bd, .be, .cd, .ce])
+    }
 }

@@ -32,8 +32,10 @@ extension DirectedEdge {
     static var ba: DirectedEdge<TestNode> { .init(from: .b, to: .a) }
     static var bc: DirectedEdge<TestNode> { .init(from: .b, to: .c) }
     static var bd: DirectedEdge<TestNode> { .init(from: .b, to: .d) }
+    static var be: DirectedEdge<TestNode> { .init(from: .b, to: .e) }
     static var cb: DirectedEdge<TestNode> { .init(from: .c, to: .b) }
     static var cd: DirectedEdge<TestNode> { .init(from: .c, to: .d) }
+    static var ce: DirectedEdge<TestNode> { .init(from: .c, to: .e) }
     static var ch: DirectedEdge<TestNode> { .init(from: .c, to: .h) }
     static var db: DirectedEdge<TestNode> { .init(from: .d, to: .b) }
     static var de: DirectedEdge<TestNode> { .init(from: .d, to: .e) }
@@ -52,8 +54,10 @@ extension Segue where N == TestNode {
     static var ba: Self { .init(from: .b, to: .a) }
     static var bc: Self { .init(from: .b, to: .c) }
     static var bd: Self { .init(from: .b, to: .d) }
+    static var be: Self { .init(from: .b, to: .e) }
     static var cb: Self { .init(from: .c, to: .b) }
     static var cd: Self { .init(from: .c, to: .d) }
+    static var ce: Self { .init(from: .c, to: .e) }
     static var ch: Self { .init(from: .c, to: .h) }
     static var db: Self { .init(from: .d, to: .b) }
     static var de: Self { .init(from: .d, to: .e) }
@@ -71,13 +75,13 @@ extension Array where Element == Segue<TestNode> {
             $0.makeAuto()
         }
     }
-    
+
     func makeDismissable() -> Self {
         map {
             $0.makeDismissable()
         }
     }
-    
+
     func with(rule: SeguePresentationRule) -> Self {
         map {
             $0.with(rule: rule)

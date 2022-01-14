@@ -13,7 +13,7 @@ import OrderedCollections
 public protocol Node: Hashable, Comparable {}
 
 /// The directed relationship between two nodes.
-public protocol DirectedConnectable: Hashable, Comparable, CustomDebugStringConvertible {
+public protocol DirectedConnector: Hashable, Comparable, CustomDebugStringConvertible {
     associatedtype N: Node
     /// The input node
     var from: N { get }
@@ -21,13 +21,13 @@ public protocol DirectedConnectable: Hashable, Comparable, CustomDebugStringConv
     var to: N { get }
 }
 
-public extension CustomDebugStringConvertible where Self: DirectedConnectable {
+public extension CustomDebugStringConvertible where Self: DirectedConnector {
     var debugDescription: String {
         return "\(from) -> \(to)"
     }
 }
 
-public extension Comparable where Self: DirectedConnectable {
+public extension Comparable where Self: DirectedConnector {
     static func < (lhs: Self, rhs: Self) -> Bool {
         if lhs.from == rhs.from {
             return lhs.to < rhs.to
@@ -38,7 +38,7 @@ public extension Comparable where Self: DirectedConnectable {
 }
 
 /// An directed edge between two nodes
-public struct DirectedEdge<N: Node>: DirectedConnectable {
+public struct DirectedEdge<N: Node>: DirectedConnector {
     public let from: N
     public let to: N
     public init(from: N, to: N) {
@@ -58,7 +58,7 @@ public extension EdgeCollection where Element: Hashable {
     }
 }
 
-public extension EdgeCollection where Element: DirectedConnectable {
+public extension EdgeCollection where Element: DirectedConnector {
     private typealias Error = DirectedEdgeCollectionError<Element>
 
     /// Checks if the graph has a specific node.
@@ -260,6 +260,6 @@ public extension EdgeCollection where Element: DirectedConnectable {
 extension Set: EdgeCollection {}
 extension OrderedSet: EdgeCollection {}
 
-public struct Walker<C: DirectedConnectable> {
+public struct Walker<C: DirectedConnector> {
     let graph: Set<C>
 }

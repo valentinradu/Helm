@@ -42,21 +42,6 @@ struct OnboardingTutorialView: View {
     }
 }
 
-struct OnboardingTermsView: View {
-    @EnvironmentObject var _helm: Helm<KeyScreen>
-    var body: some View {
-        VStack(spacing: 60) {
-            Text("Full terms and conditions")
-            LargeButton(action: { _helm.forward() }) {
-                HStack {
-                    Text("Finish")
-                    Image(systemName: "checkmark.circle")
-                }
-            }
-        }
-        .navigationTitle("Terms")
-    }
-}
 
 struct OnboardingView: View {
     @EnvironmentObject var _helm: Helm<KeyScreen>
@@ -66,10 +51,6 @@ struct OnboardingView: View {
             OnboardingUsernameView()
             NavigationLink(destination: OnboardingTutorialView(),
                            isActive: _helm.isPresented(.onboardingTutorial)) {
-                EmptyView()
-            }
-            NavigationLink(destination: OnboardingTermsView(),
-                           isActive: _helm.isPresented(.onboardingPrivacyPolicy)) {
                 EmptyView()
             }
         }

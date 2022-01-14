@@ -65,7 +65,7 @@ extension HelmError: CustomStringConvertible {
     }
 }
 
-public enum DirectedEdgeCollectionError<E: DirectedConnectable>: Equatable, Error {
+public enum DirectedEdgeCollectionError<E: DirectedConnector>: Equatable, Error {
     case ambiguousEgressEdges(Set<E>, from: E.N)
     case ambiguousIngressEdges(Set<E>, to: E.N)
     case missingEgressEdges(from: E.N)

@@ -16,7 +16,7 @@ public protocol SegueTag: Hashable {}
 extension AnyHashable: SegueTag {}
 
 /// Segues are the edges between the navigation graph's fragments.
-public struct Segue<N: Fragment>: DirectedConnectable, Equatable {
+public struct Segue<N: Fragment>: DirectedConnector, Equatable {
     /// The input fragment
     public let from: N
     /// The output fragment
@@ -31,67 +31,6 @@ public struct Segue<N: Fragment>: DirectedConnectable, Equatable {
     /// A tag identifying the segue.
     public let tag: AnyHashable?
 
-    /// Creates a segue from the origin and the destination fragments.
-    public static func from(_ from: N,
-                            to: N,
-                            rule: SeguePresentationRule = .replace,
-                            dismissable: Bool = false,
-                            auto: Bool = false) -> Self
-    {
-        Segue(from: from,
-              to: to,
-              rule: rule,
-              dismissable: dismissable,
-              auto: auto)
-    }
-
-    /// Creates multiple segues from an origin and multiple destination fragments.
-    public static func from(_ from: N,
-                            to: [N],
-                            rule: SeguePresentationRule = .replace,
-                            dismissable: Bool = false,
-                            auto: Bool = false) -> Set<Self>
-    {
-        Set(to.map {
-            Segue(from: from,
-                  to: $0,
-                  rule: rule,
-                  dismissable: dismissable,
-                  auto: auto)
-        })
-    }
-
-    /// Creates multiple segues by chaining multiple fragments.
-    /// If only one fragment is provided, the resulting segue will be a short-circuit loop.
-    public static func chain(_ fragments: [N],
-                             rule: SeguePresentationRule = .replace,
-                             dismissable: Bool = false,
-                             auto: Bool = false) -> Set<Self>
-    {
-        guard fragments.count > 0 else {
-            return []
-        }
-
-        guard fragments.count > 1 else {
-            return [Segue(from: fragments[0],
-                          to: fragments[0],
-                          rule: rule,
-                          dismissable: dismissable,
-                          auto: auto)]
-        }
-
-        var result = Set<Self>()
-        for (a, b) in zip(fragments, fragments.dropFirst()) {
-            result.insert(Segue(from: a,
-                                to: b,
-                                rule: rule,
-                                dismissable: dismissable,
-                                auto: auto))
-        }
-
-        return result
-    }
-
     /// Initializes a new segue.
     /// - parameter from: The input fragment (origin fragment)
     /// - parameter to: The output fragment (destination fragment)
@@ -99,29 +38,56 @@ public struct Segue<N: Fragment>: DirectedConnectable, Equatable {
     /// - parameter dismissable: A dismissable segue is allowed to return to the origin fragment.
     /// - parameter auto: Sets the auto firing behaviour. A fragment can only have one egress auto segue. Defaults to `false`.
     /// - parameter tag: A tag identifying the segue. Defaults to `nil`.
-    public init(from in: N,
-                to out: N,
+    public init(from: N,
+                to: N,
                 rule: SeguePresentationRule = .replace,
                 dismissable: Bool = false,
                 auto: Bool = false)
     {
-        self.from = `in`
-        self.to = out
+        self.from = from
+        self.to = to
         self.rule = rule
         self.dismissable = dismissable
         self.auto = auto
         self.tag = nil
     }
 
-    public init<T: SegueTag>(from in: N,
-                             to out: N,
+    public init<T: SegueTag>(from: N,
+                             to: N,
                              rule: SeguePresentationRule = .replace,
                              dismissable: Bool = false,
                              auto: Bool = false,
                              tag: T? = nil)
     {
-        self.from = `in`
-        self.to = out
+        self.from = from
+        self.to = to
+        self.rule = rule
+        self.dismissable = dismissable
+        self.auto = auto
+        self.tag = tag
+    }
+    
+    public init(_ edge: DirectedEdge<N>,
+                rule: SeguePresentationRule = .replace,
+                dismissable: Bool = false,
+                auto: Bool = false)
+    {
+        self.from = edge.from
+        self.to = edge.to
+        self.rule = rule
+        self.dismissable = dismissable
+        self.auto = auto
+        self.tag = nil
+    }
+
+    public init<T: SegueTag>(_ edge: DirectedEdge<N>,
+                             rule: SeguePresentationRule = .replace,
+                             dismissable: Bool = false,
+                             auto: Bool = false,
+                             tag: T? = nil)
+    {
+        self.from = edge.from
+        self.to = edge.to
         self.rule = rule
         self.dismissable = dismissable
         self.auto = auto
