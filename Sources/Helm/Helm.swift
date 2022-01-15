@@ -143,6 +143,13 @@ public class Helm<N: Fragment>: ObservableObject {
         }
 
         path.append(edge)
+
+        if let autoSegue = nav
+            .egressEdges(for: edge.to)
+            .first(where: { $0.auto })
+        {
+            try present(edge: autoSegue.edge)
+        }
     }
 
     /// Dismisses a fragment.
@@ -245,17 +252,39 @@ public class Helm<N: Fragment>: ObservableObject {
     }
 
     /// A special `isPresented(fragment:)` function that returns a binding.
-    /// Setting the value to false from the binding is the same thing as calling `dismiss(fragment:)` with the fragment as the parameter
+    /// Setting the binding value to false is the same thing as calling `dismiss(fragment:)` with the fragment as the parameter.
     /// - parameter fragment: The fragment
     /// - returns: A binding, true if the fragment is presented.
     public func isPresented(_ fragment: N) -> Binding<Bool> {
-        return Binding {
+        Binding {
             self.isPresented(fragment)
-        } set: {
+        }
+        set: {
             if $0 {
                 self.present(fragment: fragment)
             } else {
                 self.dismiss(fragment: fragment)
+            }
+        }
+    }
+
+    /// A special `isPresented(fragment:)` function that takes multiple fragments and returns a binding with the one that's presented or nil otherwise.
+    /// Setting the binding value to other fragment is the same thing as calling `present(fragment:)` with the fragment as the parameter. Setting the value to nil will dismiss all fragments.
+    /// - parameter fragments: The query fragments
+    /// - returns: The first presented fragment binding, nil if none are presented.
+    public func pickPresented(_ fragments: Set<N>) -> Binding<N?> {
+        return Binding {
+            fragments.first(where: { self.isPresented($0) })
+        }
+        set: {
+            if let fragment = $0 {
+                self.present(fragment: fragment)
+            } else {
+                for fragment in fragments {
+                    if self.isPresented(fragment) {
+                        self.dismiss(fragment: fragment)
+                    }
+                }
             }
         }
     }

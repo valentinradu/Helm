@@ -85,7 +85,6 @@ struct ArticleView: View {
 }
 
 struct DashboardView: View {
-    @State private var _selection: Int = 0
     @EnvironmentObject private var _helm: Helm<KeyScreen>
 
     var body: some View {
@@ -96,27 +95,26 @@ struct DashboardView: View {
                     Image(systemName: "plus.square.on.square")
                 }
             }
-            TabView(selection: $_selection) {
+            TabView(selection: _helm.pickPresented([.library, .news, .settings])) {
                 LibraryView()
                     .tabItem {
                         Label("Library", systemImage: "book.closed")
                     }
+                    .tag(Optional.some(KeyScreen.library))
                 NewsView()
                     .tabItem {
                         Label("News", systemImage: "newspaper")
                     }
+                    .tag(Optional.some(KeyScreen.news))
                 SettingsView()
                     .tabItem {
                         Label("Settings", systemImage: "gearshape.fill")
                     }
+                    .tag(Optional.some(KeyScreen.settings))
             }
         }
         .sheet(isPresented: _helm.isPresented(.compose)) {
             ComposeView()
-        }
-        .onChange(of: _selection) {
-            let screens: [KeyScreen] = [.library, .news, .settings]
-            _helm.present(fragment: screens[$0])
         }
     }
 }

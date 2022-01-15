@@ -16,7 +16,7 @@ let package = Package(
             name: "Helm",
             targets: ["Helm"]
         ),
-        .library(
+        .executable(
             name: "Playground",
             targets: ["Playground"]
         ),
@@ -36,10 +36,11 @@ let package = Package(
                 .product(name: "Collections", package: "swift-collections"),
             ]
         ),
-        .target(
+        .executableTarget(
             name: "Playground",
             dependencies: ["Helm"],
-            resources: [.process("Media.xcassets")]
+            resources: [.process("Media.xcassets")],
+            swiftSettings: [.unsafeFlags(["-parse-as-library"])]
         ),
         .testTarget(
             name: "HelmTests",

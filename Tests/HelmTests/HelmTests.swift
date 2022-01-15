@@ -288,4 +288,33 @@ class HelmTests: XCTestCase {
         
         XCTAssertEqual(helm.errors as? [TestGraphError], [])
     }
+    
+    func testPickPresented() throws {
+        let graph = TestGraph([
+            .ab.makeDismissable(),
+            .ac.makeDismissable(),
+            .bc, .cb
+        ])
+        let helm = try Helm(nav: graph, path: [.ab])
+        
+        let binding = helm.pickPresented([.b, .c])
+        
+        XCTAssertEqual(binding.wrappedValue, .b)
+        
+        helm.present(fragment: .c)
+        
+        XCTAssertEqual(binding.wrappedValue, .c)
+        
+        binding.wrappedValue = .b
+        
+        XCTAssertFalse(helm.isPresented(.a))
+        XCTAssertTrue(helm.isPresented(.b))
+        XCTAssertFalse(helm.isPresented(.c))
+        
+        binding.wrappedValue = nil
+        
+        XCTAssertTrue(helm.isPresented(.a))
+        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertFalse(helm.isPresented(.c))
+    }
 }
