@@ -64,20 +64,24 @@ extension Helm where N == KeyScreen {
             let segues = Set(edges.map { (edge: DirectedEdge<KeyScreen>) -> Segue<KeyScreen> in
                 switch edge {
                 case .gatekeeper => .login:
-                    return Segue(edge, rule: .hold, auto: true)
+                    return Segue(edge, style: .hold, auto: true)
                 case .gatekeeper => .register, .gatekeeper => .forgotPass:
-                    return Segue(edge, rule: .hold)
+                    return Segue(edge, style: .hold)
                 case .dashboard => .news:
-                    return Segue(edge, rule: .hold, auto: true)
+                    return Segue(edge, style: .hold, auto: true)
                 case .dashboard => .compose:
-                    return Segue(edge, rule: .hold, dismissable: true)
-                case .dashboard => .library, .dashboard => .news:
-                    return Segue(edge, rule: .hold)
+                    return Segue(edge, style: .hold, dismissable: true)
+                case .dashboard => .library:
+                    return Segue(edge, style: .hold)
                 default:
                     return Segue(edge)
                 }
             })
-            return try Helm(nav: segues)
+            return try Helm(nav: segues,
+                            path: [
+                                .splash => .gatekeeper,
+                                .gatekeeper => .register,
+                            ])
         } catch {
             assertionFailure(error.localizedDescription)
             fatalError()

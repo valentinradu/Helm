@@ -21,9 +21,9 @@ public struct Segue<N: Fragment>: DirectedConnector, Equatable {
     public let from: N
     /// The output fragment
     public let to: N
-    /// Segue rules define what happens with the origin fragment when presenting other.
-    /// - seealso: `SegueRule`
-    public let rule: SeguePresentationRule
+    /// Specifies the presentation style.
+    /// - seealso: `SeguePresentationStyle`
+    public let style: SeguePresentationStyle
     /// Whether the segue can be dismissed or not.
     public let dismissable: Bool
     /// An auto segue will automatically fire towards its destination fragment as soon as the origin fragment has been presented.
@@ -34,61 +34,61 @@ public struct Segue<N: Fragment>: DirectedConnector, Equatable {
     /// Initializes a new segue.
     /// - parameter from: The input fragment (origin fragment)
     /// - parameter to: The output fragment (destination fragment)
-    /// - parameter rule: The rule. Defaults to `.pass`.
+    /// - parameter style: The presentation style. Defaults to `.pass`.
     /// - parameter dismissable: A dismissable segue is allowed to return to the origin fragment.
     /// - parameter auto: Sets the auto firing behaviour. A fragment can only have one egress auto segue. Defaults to `false`.
     /// - parameter tag: A tag identifying the segue. Defaults to `nil`.
     public init(from: N,
                 to: N,
-                rule: SeguePresentationRule = .pass,
+                style: SeguePresentationStyle = .pass,
                 dismissable: Bool = false,
                 auto: Bool = false)
     {
         self.from = from
         self.to = to
-        self.rule = rule
+        self.style = style
         self.dismissable = dismissable
         self.auto = auto
-        self.tag = nil
+        tag = nil
     }
 
     public init<T: SegueTag>(from: N,
                              to: N,
-                             rule: SeguePresentationRule = .pass,
+                             style: SeguePresentationStyle = .pass,
                              dismissable: Bool = false,
                              auto: Bool = false,
                              tag: T? = nil)
     {
         self.from = from
         self.to = to
-        self.rule = rule
+        self.style = style
         self.dismissable = dismissable
         self.auto = auto
         self.tag = tag
     }
-    
+
     public init(_ edge: DirectedEdge<N>,
-                rule: SeguePresentationRule = .pass,
+                style: SeguePresentationStyle = .pass,
                 dismissable: Bool = false,
                 auto: Bool = false)
     {
-        self.from = edge.from
-        self.to = edge.to
-        self.rule = rule
+        from = edge.from
+        to = edge.to
+        self.style = style
         self.dismissable = dismissable
         self.auto = auto
-        self.tag = nil
+        tag = nil
     }
 
     public init<T: SegueTag>(_ edge: DirectedEdge<N>,
-                             rule: SeguePresentationRule = .pass,
+                             style: SeguePresentationStyle = .pass,
                              dismissable: Bool = false,
                              auto: Bool = false,
                              tag: T? = nil)
     {
-        self.from = edge.from
-        self.to = edge.to
-        self.rule = rule
+        from = edge.from
+        to = edge.to
+        self.style = style
         self.dismissable = dismissable
         self.auto = auto
         self.tag = tag
@@ -98,7 +98,7 @@ public struct Segue<N: Fragment>: DirectedConnector, Equatable {
     public func makeAuto() -> Self {
         Segue(from: from,
               to: to,
-              rule: rule,
+              style: style,
               dismissable: dismissable,
               auto: true,
               tag: tag)
@@ -108,7 +108,7 @@ public struct Segue<N: Fragment>: DirectedConnector, Equatable {
     public func makeDismissable() -> Self {
         Segue(from: from,
               to: to,
-              rule: rule,
+              style: style,
               dismissable: true,
               auto: auto,
               tag: tag)
@@ -118,25 +118,25 @@ public struct Segue<N: Fragment>: DirectedConnector, Equatable {
     public func with<T: SegueTag>(tag: T) -> Self {
         Segue(from: from,
               to: to,
-              rule: rule,
+              style: style,
               dismissable: dismissable,
               auto: auto,
               tag: tag)
     }
 
-    /// Returns a modified copy of the segue, setting the presentation rule.
-    public func with(rule: SeguePresentationRule) -> Self {
+    /// Returns a modified copy of the segue, setting the presentation style.
+    public func with(style: SeguePresentationStyle) -> Self {
         Segue(from: from,
               to: to,
-              rule: rule,
+              style: style,
               dismissable: dismissable,
               auto: auto,
               tag: tag)
     }
 }
 
-/// Segue rules define what happens with the origin fragment when presenting other fragment.
-public enum SeguePresentationRule: Hashable {
+/// Segue presentation styles define what happens with the origin fragment when presenting other fragment.
+public enum SeguePresentationStyle: Hashable {
     /// The origin fragment keeps its presented status. Both the origin and the destination fragment will be presented after walking the segue.
     case hold
     /// The origin fragment loses its presented status. Only the destination fragment will be presented after walking the segue.

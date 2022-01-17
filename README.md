@@ -11,10 +11,11 @@
 
 </div>
 
-Helm is a declarative, graph-based navigation library for SwiftUI. It's like a router on steroids that fully describes all the navigation flows in an app and can handle complex overlapping UI, modals, deeplinking and much more.
+Helm is a declarative, graph-based routing library for SwiftUI. It fully describes all the navigation flows and can handle complex overlapping UI, modals, deeplinking, and much more.
 
 ## Index
-* [Features](#features)
+* [Concepts](#concepts)
+* [Usage](#usage)
 * [Overview](#overview)
 * [Error handling](#error-handling)
 * [Deeplinking](#deeplinking)
@@ -24,35 +25,53 @@ Helm is a declarative, graph-based navigation library for SwiftUI. It's like a r
 
 ## Features
 
-✅ declarative
+- lightweight, ~1K lines of code
+- declarative
+- deeplinking-ready, it takes a single call to navigate anywhere
+- snapshot testing ready, iterate through all screens, capture and compare them  
+- fully documented interface 
+- expressive errors
+- tested, 90%+ coverage
+- zero 3rd party dependencies
 
-✅ lightweight, expressive and easy to use
+## Concepts
 
-✅ deeplinking ready
+### The navigation graph
 
-✅ snapshot and model based testing ready
+In Helm, navigation rules are defined in a graph structure using fragments and segues. Fragments are dynamic sections of an app, some are screens, others overlapping views (like a sliding player in a music listening app).
+Segues are directed edges used to specify rules between two fragments, such as the presentation style or the auto flag (more about these [below](#segues)).
 
-✅ built for all Apple platforms
+### The presentation path
 
-✅ zero 3rd party dependencies
+Unlike traditional routers, Helm uses an ordered set of edges to represent the path. This allows querying the presented fragments and the steps needed to reach them while enabling complex, multilayered UIs.
 
-✅ well documented
+### Transitions
 
-✅ expressive errors
- 
-✅ fully tested
+Transitions encapsulate the navigation command from a fragment to another. In Helm there are 3 types of transitions:
 
+- presenting a new fragment
+- dismissing an already presented fragment
+- fully replacing the presentation path
 
-## Overview
+### Helm
 
-Helm has a declarative approach, which means you have to first construct the underlying navigation graph with its nodes, edges and rules, and only then, you can harness its power in SwiftUI.
+`Helm`, the main class, navigates between fragments, returns their presentation state and all possible transition and so on. It conforms to `ObservableObject`, ready to work as an injected `@EnvironmentObject`.
 
-### Define the navigation graph
+### Segues
 
-First we have define all the possible dynamic fragments of the app: some might be full screens, others, just overlapping views, like a player in a music listening app. This is usually done in an `enum` conforming to the `Node` protocol. This step is done as soon as the app starts and the resulting graph is not mutable (although you can mutate the traits as we will see later).
+Segues are directed edges between fragments that define navigation rules:
+
+- `style`: `.hold` or `.pass`, when presenting a new fragment from an already presented one, should the origin hold its presentation status or pass it to the destination. In simpler terms, if we want both fragments to be visible after the transition (e.g. when you present a modal or an overlapping view in general), we should use `.hold`.
+- `dismissable`: trying to dismiss a fragment that's not marked as such will lead to an error (e.g. once user onboarding is done, you can't dismiss the dashboard and return to the onboarding screens).
+- `auto`: some container fragments (like tabs) automatically present a child. Marking a segue as auto will present the destination fragment as soon as the origin is reached.
+- `tag`: sometimes is more convenient to present a segue by its tag, instead of specifying the destination fragment or the edge.
+
+## Usage
+
+We first define all the fragments in the app. 
 
 ```swift
-enum Fragment: Node {
+enum Section: Fragment {
     // the first screen right after the app starts
     case splash
 
@@ -63,147 +82,121 @@ enum Fragment: Node {
     case register
     case forgotPass
     
-    // once the user is logged in, the dashboard is available
-    case dashboard
-    // which has 2 fragments
-    case news
-    case library
-    
-    // also, let's say that you can write new articles once you can access the dashboard
-    case compose
-    
     // and so on ...
 }
 ```
 
-Conceptually, we now have:
+We now have:
 
 <p align="center">
   <img src="flow-no-segues.svg" />
 </p>
 
-Just a bunch of fragments in our app, but with no navigation rules. In Helm, navigation rules are defined using segues and segues traits. Segues define the edges that connect the app fragments and their direction, while traits add extra constraints for using relative navigation (it helps Helm understand what do we mean by `dismiss()` or `forward()`) and for disabling, redirecting or presenting overlapping nodes (more about this a bit later).
-
-We have to first define the segues. For that, we will use a `Flow` which is just an ordered collection of unique segues. Normally, we'd need to create and add each segue manually:
+Next, the navigation graph. Normally we'd have to write down each segue.
 
 ```swift
-// don't do this, use segue operators
-let flow = Flow<Fragment>(segue: Segue(.splash, to: .gatekeeper))
-    .add(segue: Segue(.splash, to: .dashboard))
-    .add(segue: Segue(.gatekeeper, to: .login))
-    .add(segue: Segue(.gatekeeper, to: .register))
-    // and so on ...
+let segues: Set<Segue<Section>> = [
+    Segue(from: .splash, to: .gatekeeper),
+    Segue(from: .splash, to: .dashboard),
+    Segue(from: .gatekeeper, to: .login, auto: true)
+    Segue(from: .gatekeeper, to: .register)
+    //...
+]
 ```
 
-This is extra verbose, so, instead, we can use the segue operators `=>` and `<=>`. `.splash => .gatekeeper` creates a directional segue between the two nodes, while `<=>` creates two segues (a bidirectional connection), `.login <=> .register <=> .forgotPass <=> .login`, which translates to: from each of the mentioned nodes you can visit the others.
-
-The segue operators also support arrays, creating one to many segues (`.gatekeeper => [.login, .register, .forgotPass]`) or many to one segues (`[.login, .register] => .dashboard`). Segues operators don't support many-to-many connections.
-
-Using the operators, the full flow definition becomes:
+But this can get extra verbose, so, instead, we can use the directed edge operator `=>` to define all the edges, then turn them into segues. Since `=>` supports one-to-many, many-to-one and many-to-many connections, we can create all edges in fewer lines of code. 
 
 ```swift
-// depending on whether the user is logged in or not, 
-// you can navigate from the .splash screen to the .gatekeeper or directly to the .dashboard
-let flow = Flow<Fragment>(segue: .splash => [.gatekeeper, .dashboard])
-    // the gatekeeper contains three sub-fragments
-    .add(segue: .gatekeeper => .login)
-    // from each of the gatekeeper sub-fragment you can navigate to the others
-    .add(segue: .login <=> .register <=> .forgotPass <=> .login)
-    // both from .login and .register you can reach the dashboard
-    // if the login or the register operation succeeds  
-    .add(segue: [.login, .register] => .dashboard)
-    // once in the dashboard, we can visit either the .news or the .library fragment
-    .add(segue: .dashboard => [.news, .library]) 
-    // also, you can go to the article fragment and back
-    .add(segue: .dashboard <=> .compose)
+let edges = Set<DirectedEdge<Section>>()
+    .union(.splash => [.gatekeeper, .dashboard])
+    .union([.gatekeeper => .login])
+    .union(.login => .register => .forgotPass => .login)
+    .union(.login => .forgotPass => .register => .login)
+    .union([.login, .register] => .dashboard)
+    .union(.dashboard => [.news, .compose])
+    .union(.library => .news => .library)
+
+let segues = Set(edges.map { (edge: DirectedEdge<Section>) -> Segue<Section> in
+    switch edge {
+    case .gatekeeper => .login:
+        return Segue(edge, style: .hold, auto: true)
+    case .dashboard => .news:
+        return Segue(edge, style: .hold, auto: true)
+    case .dashboard => .compose:
+        return Segue(edge, style: .hold, dismissable: true)
+    case .dashboard => .library:
+        return Segue(edge, style: .hold)
+    default:
+        // the default is style: .pass, auto: false, dismissable: false
+        return Segue(edge)
+    }
+})
 ```
 
-We defined our navigation almost entirely. This corresponds to:
+Once we have the segues, the next step is to create our `Helm` instance. Optionally, we can also pass a path to start the app at a certain fragment other than the entry. Entry fragment (in this case `.splash`) is always presented.
+
+```swift
+try Helm(nav: segues)
+// or
+return try Helm(nav: segues,
+                path: [
+                    .splash => .gatekeeper,
+                    .gatekeeper => .register
+                ])
+```
+
+Now we have:
 
 <p align="center">
   <img src="flow-with-segues.svg" />
 </p>
 
-Lastly, we create the navigation graph and add the segues traits.
-First, since both `.gatekeeper` and `.dashboard` are container nodes and can't be presented by themselves, we shall automatically forward all navigation that passes through them to `.login` and `.news` respectively using the `.auto` segue trait.
-Second, we need to let Helm know that `.compose` is a modal and that its siblings, `.library` and `.news` should not be deactivated when presenting it. We'll use the `.modal` segue trait to do so.
-Third, since the user starts unauthenticated, we redirect all attempts to reach the `.dashboard` from the `.splash` to the `.gatekeeper` using the `.redirected(to:)` segue trait. This should change once the user becomes authenticated.
+Finally, we inject `Helm` into the top-most view:
 
-```swift
-let graph = try NavigationGraph(flow: flow)
-// we add the `.auto` trait
-graph.edit(segue: .gatekeeper => .login)
-    .add(trait: .auto)
-graph.edit(segue: .dashboard => .news)
-    .add(trait: .auto)
-// we mark .compose as a modal
-graph.edit(segue: .dashboard => .compose)
-    .add(trait: .modal)
-// and redirect access to the .dashboard from .splash to the .gatekeeper
-graph.edit(segue: .splash => .dashboard)
-    .add(trait: .redirect(to: Flow(segue: .splash => .gatekeeper)))
 ```
-
-Resulting our final navigation graph.
-
-<p align="center">
-  <img src="flow-with-segues-and-traits.svg" />
-</p>
-
-### Navigating inside SwiftUI views
-
-`NavigationGraph` is an `ObservableObject`, we need to inject it in your views hierachy using `environmentObject` at the top-most level so all of the views can access it.
-
-
-```swift
 struct RootView: View {
     var body: some View {
         ZStack {
-            //
+            //...
         }
-        // in this example the graph we constructed is stored in a static field
-        .environmentObject(NavigationGraph.main)
+        .environmentObject(_helm)
     }
 }
 ```
 
-Once we can access the navigation graph, we can navigate it using:
-
-- `present(node:)`: presents a node; does nothing if the target node is not connected to the presented nodes
-- `present(flow:)`: presents a flow or, in other words, a collection of nodes; does nothing if the first node in the sequence is not connected to the currently presented nodes
-- `forward()`: attempts to navigate forward when there's exactly one egress segue from the last presented node; does nothing if there's no egress segue or if there are many  
-- `back()`: attempts to revert the last visited segue using its counterpart; does nothing if there's no counterpart (i.e. `.login => .register`s counterpart is `.register => .login`) 
-- `back(at:)`: similar to `back`, except it attempts to reach a certain node by going back as many segues as needed; does nothing if the node is not encoutered while navigating back to the bottom of the navigation stack
-- `dismiss()`: deactivates the first node whose presenting segue has a `.context` or `.modal` trait
-    
-Finally, we use `isPresented(_ node:)` to hide or show a view when a node is presented or not. `isPresented` has 2 variants, one that returns a `Bool`, ideal for simple `if`s, and one that returns a binding, ready to work with many of Apple's presentation functions like `.sheet(isPresented:, content:)`.
+Now we can use Helm. Be sure to check the interface documentation for each of the presenting/dismissing methods to find out how they differ.
 
 ```swift
 struct DashboardView: View {
-    @EnvironmentObject private var nav: NavigationGraph<Fragment>
+    @EnvironmentObject private var _helm: Helm<KeyScreen>
 
     var body: some View {
         VStack {
             HStack {
                 Spacer()
-                Button(action: { nav.present(node: .compose) }) {
+                LargeButton(action: { _helm.present(fragment: .compose) }) {
                     Image(systemName: "plus.square.on.square")
                 }
             }
-            if nav.isPresented(.library) {
+            TabView(selection: _helm.pickPresented([.library, .news, .settings])) {
                 LibraryView()
                     .tabItem {
                         Label("Library", systemImage: "book.closed")
                     }
-            }
-            if nav.isPresented(.library) {
+                    .tag(Optional.some(KeyScreen.library))
                 NewsView()
                     .tabItem {
                         Label("News", systemImage: "newspaper")
                     }
+                    .tag(Optional.some(KeyScreen.news))
+                SettingsView()
+                    .tabItem {
+                        Label("Settings", systemImage: "gearshape.fill")
+                    }
+                    .tag(Optional.some(KeyScreen.settings))
             }
         }
-        .sheet(isPresented: nav.isPresented(.compose)) {
+        .sheet(isPresented: _helm.isPresented(.compose)) {
             ComposeView()
         }
     }
@@ -212,21 +205,37 @@ struct DashboardView: View {
 
 ## Error handling
 
-There should be no user-facing errors in Helm. All the possible errors originate from misconfigurations or unexpected usage (i.e. trying to follow a disabled segue, trying to present a disconneccted node, etc). All the graph mutating functions in Helm throw. I mostly use them with `try!`, since I belive in failing early: any navigation problem should surface as soon as possible. 
-A more defensive solution would wrap them using a function that would do nothing in production and would assert in development. I don't recommend using `try?` since it possibly hides navigation problems and hinders automated testing. 
+Most of Helm's methods don't throw, instead, they report errors using the `errors` published property. This allows seamless integration with SwiftUI handlers (e.g. `Button`'s action) while also allowing easy debugging and error assertion.
+
+```swift
+_helm.$errors
+    .sink {
+        assertionFailure($0.description)
+    }
+    .store(in: &cancellables)
+``` 
 
 ## Deeplinking
 
-Deeplinking is really easy with Helm. All we have to do is translate our deeplink path to a flow and then navigate to that flow (i.e. `nav.present(flow: .dashboard => [.compose, .news])` would navigate to the dashboard, in the news tab, having the compose article modal open). Note that the serialized deeplink path can't be a linear structure (i.e. .dashboard => .news) and it's more like a partial graph where multiple nodes can originate from the same parent. This enables complex overlapping UI.  
+The presentation path (`OrderedSet<DirectedEdge<N>>`) is already conforming to `Encodable` and `Decodable` protocols so it can easily be saved and restored as a JSON object. Alternatively, one could translate a more limited in scope string path to the presentation graph path and use the former to link to sections in the app.  
 
-## Snapshot testing
+## Snapshot Testing
 
-With Helm snapshot testing can be fully automated by walking the entire available navigation graph for each possible state of the app. In our example above, since the `.dashboard` is not available while the user is unauthenticated, the walker would only snapshot the `.gatekeeper` nodes. Once we update the state, the rest of the graph will be snapshot as well.
-In the near future, I plan to implement the walker into Helm, making the process even easier. (PRs welcomed, of course)
+Being able to walk the navigation graph is one of the greatest advantages of Helm. This can have multiple uses, snapshot testing being the most important. Walk, take snapshots after each step and compare the result with previously saved snapshots.
+
+```swift
+let transitions = _helm.transitions()
+for transition in transitions {
+    try helm.navigate(transition: transition)
+    // take a snapshot of the app and compare it
+}
+```
+
+Also, using a custom transition set, one can have arbitrary steps between fragments. This can be used to automatically record videos (and snapshots) for a specific flow (really helpful when recording App Store promotional material).  
 
 ## Examples
 
-The package contains an extra project called `Playground`. It's integrating Helm with SwiftUI, including using `NavigationView`s, sheet modals, `TabView`, etc. Feel free to use it as a starting point.
+The package contains an extra project called `Playground`. It's integrating Helm with SwiftUI, including using `NavigationView`s, sheet modals, `TabView`, etc.
 
 ## License
 [MIT License](LICENSE)

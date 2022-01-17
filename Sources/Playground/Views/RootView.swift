@@ -49,11 +49,6 @@ struct RootView: View {
         }
         .environmentObject(_helm)
         .environmentObject(_state)
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
-                _helm.present(fragment: .dashboard)
-            }
-        }
         .onReceive(_helm.$errors) {
             guard let lastError = $0.last else {
                 return

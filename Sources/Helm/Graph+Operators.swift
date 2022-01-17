@@ -35,7 +35,7 @@ public func => <N: Node>(lhs: Set<N>, rhs: N) -> Set<DirectedEdge<N>> {
 public func => <N: Node>(lhs: DirectedEdge<N>, rhs: N) -> Set<DirectedEdge<N>> {
     return [
         lhs,
-        DirectedEdge(from: lhs.to, to: rhs)
+        DirectedEdge(from: lhs.to, to: rhs),
     ]
 }
 

@@ -47,6 +47,9 @@ public struct DirectedEdge<N: Node>: DirectedConnector {
     }
 }
 
+extension DirectedEdge: Encodable where N: Encodable {}
+extension DirectedEdge: Decodable where N: Decodable {}
+
 /// A collection of edges.
 public protocol EdgeCollection: Collection & Hashable & Sequence {}
 

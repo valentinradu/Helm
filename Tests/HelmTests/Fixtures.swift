@@ -82,9 +82,9 @@ extension Array where Element == Segue<TestNode> {
         }
     }
 
-    func with(rule: SeguePresentationRule) -> Self {
+    func with(rule: SeguePresentationStyle) -> Self {
         map {
-            $0.with(rule: rule)
+            $0.with(style: rule)
         }
     }
 }

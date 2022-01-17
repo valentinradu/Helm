@@ -9,14 +9,15 @@ import Collections
 import Foundation
 import SwiftUI
 
-// A helper for navigating using any of the navigation methods (present, dismiss or replace).
+// A helper listing all the navigation methods.
 public enum EdgeTransition<N: Fragment>: Hashable {
     case present(edge: DirectedEdge<N>)
     case dismiss(edge: DirectedEdge<N>)
     case replace(path: OrderedSet<DirectedEdge<N>>)
 }
 
-/// `Helm` holds the navigation rules plus the path that leads to the currently presented fragments.
+/// The main class. Holds the navigation rules plus the presented path.
+/// Has methods to navigate and list all possible transitions, among others.
 public class Helm<N: Fragment>: ObservableObject {
     public typealias HelmSegue = Segue<N>
     public typealias HelmGraph = Set<HelmSegue>
@@ -25,10 +26,11 @@ public class Helm<N: Fragment>: ObservableObject {
     public typealias HelmPath = OrderedSet<HelmEdge>
     public typealias HelmFragments = OrderedSet<N>
     private typealias ConcreteHelmError = HelmError<N>
-    /// The navigation graph describes all the navigation rules in the app.
+
+    /// The navigation graph describes all the navigation rules.
     public let nav: HelmGraph
 
-    /// The path that leads to the currently presented fragments.
+    /// The presented path. It leads to the currently presented fragments.
     public private(set) var path: HelmPath {
         didSet {
             presentedFragments = calculatePresentedFragments()
@@ -38,21 +40,21 @@ public class Helm<N: Fragment>: ObservableObject {
     /// The presented fragments.
     @Published public private(set) var presentedFragments: HelmFragments
 
-    /// All the errors triggered by navigating the graph.
+    /// All the errors triggered when navigating the graph.
     @Published public private(set) var errors: [Swift.Error]
 
     private let edgeToSegueMap: [HelmEdge: HelmSegue]
 
     /// Initializes a new Helm instance.
-    /// - parameter nav: A directed graph of segues that defies all the navigation rules in the app.
+    /// - parameter nav: A directed graph of segues that defines all the navigation rules in the app.
     /// - parameter path: The path that leads to the currently presented fragments.
     public init(nav: HelmGraph,
                 path: HelmPath = []) throws
     {
-        self.errors = []
-        self.presentedFragments = []
+        errors = []
+        presentedFragments = []
         self.nav = nav
-        self.edgeToSegueMap = nav
+        edgeToSegueMap = nav
             .map {
                 ($0.edge, $0)
             }
@@ -61,13 +63,13 @@ public class Helm<N: Fragment>: ObservableObject {
 
         try validate()
 
-        self.presentedFragments = calculatePresentedFragments()
+        presentedFragments = calculatePresentedFragments()
     }
 
     /// Presents a fragment.
-    /// A segue must connect it to one of the presented fragment.
+    /// An ingress segue must connect the fragment to one of the already presented fragments.
     /// If there is no such segue, the operation fails.
-    /// If multiple presented origin fragments are available, the search starts with the lastest.
+    /// If multiple presented origin fragments are available, the search starts with the latest in the path.
     /// - parameter fragment: The given fragment.
     public func present(fragment: N) {
         do {
@@ -122,7 +124,7 @@ public class Helm<N: Fragment>: ObservableObject {
         }
     }
 
-    /// Presents the next fragment by triggering the sole egress segue of the latest presented fragment.
+    /// Presents the next fragment by triggering the sole egress segue of the latest fragment in the path.
     /// If the fragment has more than a segue, the operation fails
     /// If the fragment has no segue, the operation fails
     public func forward() {
@@ -141,8 +143,7 @@ public class Helm<N: Fragment>: ObservableObject {
         }
     }
 
-    /// Triggers a segue presenting its out node.
-    /// If possible, use one of the higher level present or dismiss methods instead.
+    /// Triggers a segue by its edge.
     public func present(edge: HelmEdge) throws {
         let segue = try segue(for: edge)
 
@@ -163,7 +164,7 @@ public class Helm<N: Fragment>: ObservableObject {
     /// Dismisses a fragment.
     /// If the fragment is not already presented, the operation fails.
     /// If the fragment has no dismissable ingress segues, the operation fails.
-    /// - note: Only the segues in the path (already visited) are considered.
+    /// - note: Only the segues in the path (already visited) are considered when searching for the dismissable ingress segue.
     /// - parameter fragment: The given fragment.
     public func dismiss(fragment: N) {
         do {
@@ -185,8 +186,8 @@ public class Helm<N: Fragment>: ObservableObject {
         }
     }
 
-    /// Dismisses a fragment by triggering in reverse a segue with a specific tag.
-    /// If there is no such segue in the path (already visited), the operation fails.
+    /// Dismisses a fragment by triggering (in reverse) a segue with a specific tag.
+    /// If there is no such segue in the path (already visited) or the segue is not dismissable, the operation fails.
     /// - parameter tag: The tag to look after.
     public func dismiss<T: SegueTag>(tag: T) {
         do {
@@ -205,7 +206,7 @@ public class Helm<N: Fragment>: ObservableObject {
     }
 
     /// Dismisses the last presented fragment.
-    /// The operation fails if the fragment has no dismissable ingress segue.
+    /// The operation fails if the latest fragment in the path has no dismissable ingress segue.
     public func dismiss() {
         do {
             guard let edge = path.last else {
@@ -219,7 +220,6 @@ public class Helm<N: Fragment>: ObservableObject {
     }
 
     /// Triggers a segue dismissing its out node.
-    /// If possible, use one of the higher level present or dismiss methods instead.
     public func dismiss(edge: HelmEdge) throws {
         guard let segue = nav.first(where: { $0.edge == edge }) else {
             throw ConcreteHelmError.missingSegueForEdge(edge)
@@ -247,7 +247,7 @@ public class Helm<N: Fragment>: ObservableObject {
         path = path.subtracting(removables)
     }
 
-    /// Replaces the entire current navigation path an re-validates it.
+    /// Replaces the entire current presented path an re-validates it.
     /// - parameter path: The new path.
     /// - throws: Throws if the new path fails validation.
     public func replace(path: HelmPath) throws {
@@ -255,8 +255,7 @@ public class Helm<N: Fragment>: ObservableObject {
         try validate()
     }
 
-    /// Navigates a transition calling the right method (present, dismiss or replace),
-    /// and advancing the navigation.
+    /// Navigates a transition calling the right method (present, dismiss or replace).
     /// - parameter transition: A transition.
     /// - throws: Throws if the transition is not valid.
     public func navigate(transition: HelmTransition) throws {
@@ -276,8 +275,8 @@ public class Helm<N: Fragment>: ObservableObject {
         return presentedFragments.contains(fragment)
     }
 
-    /// The entry fragment in the navigation graph.
-    /// The entry fragment is initially presented.
+    /// The navigation graph's entry point.
+    /// The entry fragment is always initially presented.
     public var entry: N {
         nav.inlets.map { $0.from }[0]
     }
@@ -333,7 +332,7 @@ public class Helm<N: Fragment>: ObservableObject {
     /// Get all the possible transitions in the current navigation graph.
     /// This method does a deepth first search on the navigation graph while respecting all the navigation rules.
     public func transitions(from: N? = nil,
-                            until: N? = nil) -> [HelmTransition]
+                            until _: N? = nil) -> [HelmTransition]
     {
         var result: [HelmTransition] = []
         var visited: Set<HelmSegue> = []
@@ -413,7 +412,7 @@ public class Helm<N: Fragment>: ObservableObject {
             guard let segue = edgeToSegueMap[edge] else {
                 return []
             }
-            switch segue.rule {
+            switch segue.style {
             case .hold:
                 result.append(segue.to)
             case .pass:

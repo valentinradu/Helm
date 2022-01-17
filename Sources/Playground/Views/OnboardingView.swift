@@ -42,7 +42,6 @@ struct OnboardingTutorialView: View {
     }
 }
 
-
 struct OnboardingView: View {
     @EnvironmentObject var _helm: Helm<KeyScreen>
 
