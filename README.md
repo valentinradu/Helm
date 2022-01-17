@@ -41,9 +41,9 @@ Helm is a declarative, graph-based routing library for SwiftUI. It fully describ
 In Helm, navigation rules are defined in a graph structure using fragments and segues. Fragments are dynamic sections of an app, some are screens, others overlapping views (like a sliding player in a music listening app).
 Segues are directed edges used to specify rules between two fragments, such as the presentation style or the auto flag (more about these [below](#segues)).
 
-### The presentation path
+### The presented path
 
-Unlike traditional routers, Helm uses an ordered set of edges to represent the path. This allows querying the presented fragments and the steps needed to reach them while enabling complex, multilayered UIs.
+Unlike traditional routers, Helm uses an ordered set of edges to represent the path. This allows querying the presented fragments and the steps needed to reach them while enabling multilayered UIs.
 
 ### Transitions
 
@@ -51,7 +51,7 @@ Transitions encapsulate the navigation command from a fragment to another. In He
 
 - presenting a new fragment
 - dismissing an already presented fragment
-- fully replacing the presentation path
+- fully replacing the presented path
 
 ### Helm
 
@@ -59,12 +59,12 @@ Transitions encapsulate the navigation command from a fragment to another. In He
 
 ### Segues
 
-Segues are directed edges between fragments that define navigation rules:
+Segues are directed edges between fragments with navigation rules:
 
-- `style`: `.hold` or `.pass`, when presenting a new fragment from an already presented one, should the origin hold its presentation status or pass it to the destination. In simpler terms, if we want both fragments to be visible after the transition (e.g. when you present a modal or an overlapping view in general), we should use `.hold`.
+- `style`: `.hold` or `.pass`, when presenting a new fragment from an already presented one, should the original hold its status or pass it to the destination. In simpler terms, if we want both fragments to be visible after the transition (e.g. when you present a modal or an overlapping view in general), we should use `.hold`.
 - `dismissable`: trying to dismiss a fragment that's not marked as such will lead to an error (e.g. once user onboarding is done, you can't dismiss the dashboard and return to the onboarding screens).
-- `auto`: some container fragments (like tabs) automatically present a child. Marking a segue as auto will present the destination fragment as soon as the origin is reached.
-- `tag`: sometimes is more convenient to present a segue by its tag, instead of specifying the destination fragment or the edge.
+- `auto`: some container fragments (like tabs) automatically present a child. Marking a segue as auto will present its `out` fragment as soon as its `in` fragment is reached.
+- `tag`: sometimes is convenient to present or dismiss a segue by its tag.
 
 ## Usage
 
@@ -133,28 +133,30 @@ let segues = Set(edges.map { (edge: DirectedEdge<Section>) -> Segue<Section> in
 })
 ```
 
-Once we have the segues, the next step is to create our `Helm` instance. Optionally, we can also pass a path to start the app at a certain fragment other than the entry. Entry fragment (in this case `.splash`) is always presented.
-
-```swift
-try Helm(nav: segues)
-// or
-return try Helm(nav: segues,
-                path: [
-                    .splash => .gatekeeper,
-                    .gatekeeper => .register
-                ])
-```
-
 Now we have:
 
 <p align="center">
   <img src="flow-with-segues.svg" />
 </p>
 
-Finally, we inject `Helm` into the top-most view:
+Once we have the segues, the next step is to create our `Helm` instance. Optionally, we can also pass a path to start the app at a certain fragment other than the entry. Note that the entry fragment (in this case `.splash`) is always presented.
+
+```swift
+try Helm(nav: segues)
+// or
+try Helm(nav: segues,
+         path: [
+             .splash => .gatekeeper,
+             .gatekeeper => .register
+         ])
+```
+
+Then, we inject `Helm` into the top-most view:
 
 ```
 struct RootView: View {
+    @StateObject private var _helm: Helm = ...
+    
     var body: some View {
         ZStack {
             //...
@@ -164,7 +166,7 @@ struct RootView: View {
 }
 ```
 
-Now we can use Helm. Be sure to check the interface documentation for each of the presenting/dismissing methods to find out how they differ.
+Finally, we can use Helm. Be sure to check the interface documentation for each of the presenting/dismissing methods to find out how they differ.
 
 ```swift
 struct DashboardView: View {
@@ -205,7 +207,7 @@ struct DashboardView: View {
 
 ## Error handling
 
-Most of Helm's methods don't throw, instead, they report errors using the `errors` published property. This allows seamless integration with SwiftUI handlers (e.g. `Button`'s action) while also allowing easy debugging and error assertion.
+Most of Helm's methods don't throw, instead, they report errors using the `errors` published property. This allows seamless integration with SwiftUI handlers (e.g. `Button`'s action) while also making things easy to debug and assert.
 
 ```swift
 _helm.$errors
@@ -217,21 +219,21 @@ _helm.$errors
 
 ## Deeplinking
 
-The presentation path (`OrderedSet<DirectedEdge<N>>`) is already conforming to `Encodable` and `Decodable` protocols so it can easily be saved and restored as a JSON object. Alternatively, one could translate a more limited in scope string path to the presentation graph path and use the former to link to sections in the app.  
+The presented path (`OrderedSet<DirectedEdge<N>>`) is already conforming to `Encodable` and `Decodable` protocols so it can easily be saved and restored as a JSON object. Alternatively, one could translate a simpler string path to the graph-based presentation path and use the former to link sections in the app.
 
 ## Snapshot Testing
 
-Being able to walk the navigation graph is one of the greatest advantages of Helm. This can have multiple uses, snapshot testing being the most important. Walk, take snapshots after each step and compare the result with previously saved snapshots.
+Being able to walk the navigation graph is one of the greatest advantages of Helm. This can have multiple uses, snapshot testing being the most important. Walk, take snapshots after each step and compare the result with previously saved snapshots. All done in a couple of lines of code:
 
 ```swift
 let transitions = _helm.transitions()
 for transition in transitions {
     try helm.navigate(transition: transition)
-    // take a snapshot of the app and compare it
+    // mutate state if needed, take a snapshot, compare it
 }
 ```
 
-Also, using a custom transition set, one can have arbitrary steps between fragments. This can be used to automatically record videos (and snapshots) for a specific flow (really helpful when recording App Store promotional material).  
+Also, by using a custom transition set, one can make arbitrary steps between fragments. This can be used to automatically record videos (and snapshots) for a specific flow (really helpful with App Store promotional material).  
 
 ## Examples
 
