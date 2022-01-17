@@ -9,10 +9,18 @@ import Collections
 import Foundation
 import SwiftUI
 
+// A helper for navigating using any of the navigation methods (present, dismiss or replace).
+public enum EdgeTransition<N: Fragment>: Hashable {
+    case present(edge: DirectedEdge<N>)
+    case dismiss(edge: DirectedEdge<N>)
+    case replace(path: OrderedSet<DirectedEdge<N>>)
+}
+
 /// `Helm` holds the navigation rules plus the path that leads to the currently presented fragments.
 public class Helm<N: Fragment>: ObservableObject {
     public typealias HelmSegue = Segue<N>
     public typealias HelmGraph = Set<HelmSegue>
+    public typealias HelmTransition = EdgeTransition<N>
     public typealias HelmEdge = DirectedEdge<N>
     public typealias HelmPath = OrderedSet<HelmEdge>
     public typealias HelmFragments = OrderedSet<N>
@@ -239,6 +247,29 @@ public class Helm<N: Fragment>: ObservableObject {
         path = path.subtracting(removables)
     }
 
+    /// Replaces the entire current navigation path an re-validates it.
+    /// - parameter path: The new path.
+    /// - throws: Throws if the new path fails validation.
+    public func replace(path: HelmPath) throws {
+        self.path = path
+        try validate()
+    }
+
+    /// Navigates a transition calling the right method (present, dismiss or replace),
+    /// and advancing the navigation.
+    /// - parameter transition: A transition.
+    /// - throws: Throws if the transition is not valid.
+    public func navigate(transition: HelmTransition) throws {
+        switch transition {
+        case let .present(edge):
+            try present(edge: edge)
+        case let .dismiss(edge):
+            try dismiss(edge: edge)
+        case let .replace(path):
+            try replace(path: path)
+        }
+    }
+
     /// Checks if a fragment is presented. Shorthand for `presentedFragments.contains(fragment)`
     /// - returns: True if the fragment is presented.
     public func isPresented(_ fragment: N) -> Bool {
@@ -299,6 +330,50 @@ public class Helm<N: Fragment>: ObservableObject {
         throw ConcreteHelmError.missingSegueForEdge(edge)
     }
 
+    /// Get all the possible transitions in the current navigation graph.
+    /// This method does a deepth first search on the navigation graph while respecting all the navigation rules.
+    public func transitions(from: N? = nil,
+                            until: N? = nil) -> [HelmTransition]
+    {
+        var result: [HelmTransition] = []
+        var visited: Set<HelmSegue> = []
+        let inlets = OrderedSet(nav.egressEdges(for: from ?? entry).sorted())
+        guard inlets.count > 0 else {
+            return []
+        }
+
+        var stack: [(HelmPath, HelmSegue)] = inlets.map {
+            ([], $0)
+        }
+
+        while stack.count > 0 {
+            let (path, segue) = stack.removeLast()
+            let transition = HelmTransition.present(edge: segue.edge)
+
+            result.append(transition)
+            visited.insert(segue)
+
+            let nextSegues = OrderedSet(
+                nav
+                    .egressEdges(for: segue.to)
+                    .filter { !visited.contains($0) }
+                    .sorted()
+            )
+
+            if nextSegues.count > 0 {
+                stack.append(contentsOf: nextSegues.map {
+                    (path.union([segue.edge]), $0)
+                })
+            } else {
+                if let (nextPath, _) = stack.last {
+                    result.append(.replace(path: nextPath))
+                }
+            }
+        }
+
+        return result
+    }
+
     private func validate() throws {
         if nav.isEmpty {
             throw ConcreteHelmError.empty
@@ -335,13 +410,13 @@ public class Helm<N: Fragment>: ObservableObject {
         var result: HelmFragments = [entry]
 
         for edge in path {
-            guard let segue = nav.first(where: { $0.edge == edge }) else {
+            guard let segue = edgeToSegueMap[edge] else {
                 return []
             }
             switch segue.rule {
             case .hold:
                 result.append(segue.to)
-            case .replace:
+            case .pass:
                 result.remove(segue.from)
                 result.append(segue.to)
             }

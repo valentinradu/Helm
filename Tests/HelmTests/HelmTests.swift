@@ -317,4 +317,47 @@ class HelmTests: XCTestCase {
         XCTAssertFalse(helm.isPresented(.b))
         XCTAssertFalse(helm.isPresented(.c))
     }
+    
+    func testReplacePathFail() throws {
+        let graph = TestGraph([.ab, .bc, .cd])
+        let helm = try Helm(nav: graph, path: [.ab])
+        
+        XCTAssertThrowsError(try helm.replace(path: [.ac]),
+                             TestGraphError.missingSegueForEdge(.db).description)
+    }
+    
+    func testReplacePath() throws {
+        let graph = TestGraph([.ab, .ac.with(rule: .hold)])
+        let helm = try Helm(nav: graph, path: [.ab])
+        
+        try helm.replace(path: [.ac])
+
+        XCTAssertTrue(helm.isPresented(.a))
+        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertTrue(helm.isPresented(.c))
+    }
+    
+    func testTransitions() throws {
+        let graph = TestGraph([.ab, .ac, .ad, .bc, .bd, .cd, .db])
+        let helm = try Helm(nav: graph)
+        
+        let transitions = helm.transitions()
+        XCTAssertEqual(transitions,
+                       [
+                           .present(edge: .ad),
+                           .present(edge: .db),
+                           .present(edge: .bd),
+                           .replace(path: [.ad, .db]),
+                           .present(edge: .bc),
+                           .present(edge: .cd),
+                           .replace(path: []),
+                           .present(edge: .ac),
+                           .replace(path: []),
+                           .present(edge: .ab)
+                       ])
+        
+        for transition in transitions {
+            XCTAssertNoThrow(try helm.navigate(transition: transition))
+        }
+    }
 }

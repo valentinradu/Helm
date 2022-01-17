@@ -34,13 +34,13 @@ public struct Segue<N: Fragment>: DirectedConnector, Equatable {
     /// Initializes a new segue.
     /// - parameter from: The input fragment (origin fragment)
     /// - parameter to: The output fragment (destination fragment)
-    /// - parameter rule: The rule. Defaults to `.replace`.
+    /// - parameter rule: The rule. Defaults to `.pass`.
     /// - parameter dismissable: A dismissable segue is allowed to return to the origin fragment.
     /// - parameter auto: Sets the auto firing behaviour. A fragment can only have one egress auto segue. Defaults to `false`.
     /// - parameter tag: A tag identifying the segue. Defaults to `nil`.
     public init(from: N,
                 to: N,
-                rule: SeguePresentationRule = .replace,
+                rule: SeguePresentationRule = .pass,
                 dismissable: Bool = false,
                 auto: Bool = false)
     {
@@ -54,7 +54,7 @@ public struct Segue<N: Fragment>: DirectedConnector, Equatable {
 
     public init<T: SegueTag>(from: N,
                              to: N,
-                             rule: SeguePresentationRule = .replace,
+                             rule: SeguePresentationRule = .pass,
                              dismissable: Bool = false,
                              auto: Bool = false,
                              tag: T? = nil)
@@ -68,7 +68,7 @@ public struct Segue<N: Fragment>: DirectedConnector, Equatable {
     }
     
     public init(_ edge: DirectedEdge<N>,
-                rule: SeguePresentationRule = .replace,
+                rule: SeguePresentationRule = .pass,
                 dismissable: Bool = false,
                 auto: Bool = false)
     {
@@ -81,7 +81,7 @@ public struct Segue<N: Fragment>: DirectedConnector, Equatable {
     }
 
     public init<T: SegueTag>(_ edge: DirectedEdge<N>,
-                             rule: SeguePresentationRule = .replace,
+                             rule: SeguePresentationRule = .pass,
                              dismissable: Bool = false,
                              auto: Bool = false,
                              tag: T? = nil)
@@ -140,5 +140,5 @@ public enum SeguePresentationRule: Hashable {
     /// The origin fragment keeps its presented status. Both the origin and the destination fragment will be presented after walking the segue.
     case hold
     /// The origin fragment loses its presented status. Only the destination fragment will be presented after walking the segue.
-    case replace
+    case pass
 }

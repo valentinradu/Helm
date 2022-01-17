@@ -218,8 +218,9 @@ public extension EdgeCollection where Element: DirectedConnector {
 
     /// Iterates through the entire graph or a fragment of it (starting at a given node) depth first. Edges leading to the same node are iterated.
     /// - parameter from: An optional start node. If not provided, the entire graph will be iterated.
+    /// - parameter until: An optional end node. If provided, the search will end when reaching it.
     /// - returns: An ordered set containing all the iterated segues in the right order.
-    func dfs(from: Element.N? = nil) -> OrderedSet<Element> {
+    func dfs(from: Element.N? = nil, until: Element.N? = nil) -> OrderedSet<Element> {
         var visited: OrderedSet<Element> = []
         let entries: Set<Element>
 
@@ -238,6 +239,10 @@ public extension EdgeCollection where Element: DirectedConnector {
 
             while let edge = stack.last {
                 visited.append(edge)
+
+                if edge.to == until {
+                    return visited
+                }
 
                 let nextEdges =
                     filter {
