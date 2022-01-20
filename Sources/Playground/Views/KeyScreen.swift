@@ -79,8 +79,8 @@ extension Helm where N == KeyScreen {
             })
             return try Helm(nav: segues,
                             path: [
-                                .splash => .gatekeeper,
-                                .gatekeeper => .register,
+                                PathEdge(.splash => .gatekeeper),
+                                PathEdge(.gatekeeper => .register),
                             ])
         } catch {
             assertionFailure(error.localizedDescription)

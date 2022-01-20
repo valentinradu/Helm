@@ -11,9 +11,9 @@ import SwiftUI
 struct PlaygroundApp: App {
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .frame(minWidth: 420,
-                       minHeight: 680)
+//            RootView()
+//                .frame(minWidth: 420,
+//                       minHeight: 680)
         }
         .windowStyle(.hiddenTitleBar)
     }

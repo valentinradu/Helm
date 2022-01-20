@@ -25,26 +25,48 @@ enum TestTag: SegueTag {
     case menu
 }
 
-extension DirectedEdge {
-    static var ab: DirectedEdge<TestNode> { .init(from: .a, to: .b) }
-    static var ac: DirectedEdge<TestNode> { .init(from: .a, to: .c) }
-    static var ad: DirectedEdge<TestNode> { .init(from: .a, to: .d) }
-    static var ba: DirectedEdge<TestNode> { .init(from: .b, to: .a) }
-    static var bc: DirectedEdge<TestNode> { .init(from: .b, to: .c) }
-    static var bd: DirectedEdge<TestNode> { .init(from: .b, to: .d) }
-    static var be: DirectedEdge<TestNode> { .init(from: .b, to: .e) }
-    static var cb: DirectedEdge<TestNode> { .init(from: .c, to: .b) }
-    static var cd: DirectedEdge<TestNode> { .init(from: .c, to: .d) }
-    static var ce: DirectedEdge<TestNode> { .init(from: .c, to: .e) }
-    static var ch: DirectedEdge<TestNode> { .init(from: .c, to: .h) }
-    static var db: DirectedEdge<TestNode> { .init(from: .d, to: .b) }
-    static var de: DirectedEdge<TestNode> { .init(from: .d, to: .e) }
-    static var df: DirectedEdge<TestNode> { .init(from: .d, to: .f) }
-    static var dg: DirectedEdge<TestNode> { .init(from: .d, to: .g) }
-    static var dh: DirectedEdge<TestNode> { .init(from: .d, to: .h) }
-    static var hf: DirectedEdge<TestNode> { .init(from: .h, to: .f) }
-    static var hj: DirectedEdge<TestNode> { .init(from: .h, to: .j) }
-    static var jg: DirectedEdge<TestNode> { .init(from: .j, to: .g) }
+extension DirectedEdge where N == TestNode {
+    static var ab: Self { .a => .b }
+    static var ac: Self { .a => .c }
+    static var ad: Self { .a => .d }
+    static var ba: Self { .b => .a }
+    static var bc: Self { .b => .c }
+    static var bd: Self { .b => .d }
+    static var be: Self { .b => .e }
+    static var cb: Self { .c => .b }
+    static var cd: Self { .c => .d }
+    static var ce: Self { .c => .e }
+    static var ch: Self { .c => .h }
+    static var db: Self { .d => .b }
+    static var de: Self { .d => .e }
+    static var df: Self { .d => .f }
+    static var dg: Self { .d => .g }
+    static var dh: Self { .d => .h }
+    static var hf: Self { .h => .f }
+    static var hj: Self { .h => .j }
+    static var jg: Self { .j => .g }
+}
+
+extension PathEdge where N == TestNode {
+    static var ab: Self { .init(.a => .b) }
+    static var ac: Self { .init(.a => .c) }
+    static var ad: Self { .init(.a => .d) }
+    static var ba: Self { .init(.b => .a) }
+    static var bc: Self { .init(.b => .c) }
+    static var bd: Self { .init(.b => .d) }
+    static var be: Self { .init(.b => .e) }
+    static var cb: Self { .init(.c => .b) }
+    static var cd: Self { .init(.c => .d) }
+    static var ce: Self { .init(.c => .e) }
+    static var ch: Self { .init(.c => .h) }
+    static var db: Self { .init(.d => .b) }
+    static var de: Self { .init(.d => .e) }
+    static var df: Self { .init(.d => .f) }
+    static var dg: Self { .init(.d => .g) }
+    static var dh: Self { .init(.d => .h) }
+    static var hf: Self { .init(.h => .f) }
+    static var hj: Self { .init(.h => .j) }
+    static var jg: Self { .init(.j => .g) }
 }
 
 extension Segue where N == TestNode {

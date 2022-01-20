@@ -73,11 +73,11 @@ class HelmTests: XCTestCase {
 
     func testDismissEdgeFail() throws {
         let helm = try Helm(nav: TestGraph([.ab] + [.ac].makeDismissable()), path: [.ab])
-        XCTAssertThrowsError(try helm.dismiss(edge: .db),
+        XCTAssertThrowsError(try helm.dismiss(pathEdge: .db),
                              TestGraphError.missingSegueForEdge(.db).description)
-        XCTAssertThrowsError(try helm.dismiss(edge: .ab),
+        XCTAssertThrowsError(try helm.dismiss(pathEdge: .ab),
                              TestGraphError.segueNotDismissable(.ab).description)
-        XCTAssertThrowsError(try helm.dismiss(edge: .ac),
+        XCTAssertThrowsError(try helm.dismiss(pathEdge: .ac),
                              TestGraphError.missingPathEdge(.ac).description)
     }
 
@@ -89,7 +89,7 @@ class HelmTests: XCTestCase {
         )
         let helm = try Helm(nav: graph, path: [.ab, .bc, .cd])
 
-        try helm.dismiss(edge: .bc)
+        try helm.dismiss(pathEdge: .bc)
 
         XCTAssertFalse(helm.isPresented(.a))
         XCTAssertTrue(helm.isPresented(.b))
@@ -167,9 +167,9 @@ class HelmTests: XCTestCase {
         let graph = TestGraph([.ab, .bc, .cd])
         let helm = try Helm(nav: graph, path: [.ab])
 
-        XCTAssertThrowsError(try helm.present(edge: .db),
+        XCTAssertThrowsError(try helm.present(pathEdge: .db),
                              TestGraphError.missingSegueForEdge(.db).description)
-        XCTAssertThrowsError(try helm.present(edge: .cd),
+        XCTAssertThrowsError(try helm.present(pathEdge: .cd),
                              TestGraphError.fragmentNotPresented(.c).description)
     }
 
@@ -177,7 +177,7 @@ class HelmTests: XCTestCase {
         let graph = TestGraph([.ab, .bc, .cd])
         let helm = try Helm(nav: graph, path: [.ab])
 
-        try helm.present(edge: .bc)
+        try helm.present(pathEdge: .bc)
 
         XCTAssertTrue(helm.isPresented(.c))
         XCTAssertEqual(helm.path, [.ab, .bc])
@@ -344,20 +344,37 @@ class HelmTests: XCTestCase {
         let transitions = helm.transitions()
         XCTAssertEqual(transitions,
                        [
-                           .present(edge: .ad),
-                           .present(edge: .db),
-                           .present(edge: .bd),
+                           .present(pathEdge: .ad),
+                           .present(pathEdge: .db),
+                           .present(pathEdge: .bd),
                            .replace(path: [.ad, .db]),
-                           .present(edge: .bc),
-                           .present(edge: .cd),
+                           .present(pathEdge: .bc),
+                           .present(pathEdge: .cd),
                            .replace(path: []),
-                           .present(edge: .ac),
+                           .present(pathEdge: .ac),
                            .replace(path: []),
-                           .present(edge: .ab),
+                           .present(pathEdge: .ab),
                        ])
 
         for transition in transitions {
             XCTAssertNoThrow(try helm.navigate(transition: transition))
         }
+    }
+
+    func testFragmentIdentity() throws {
+        let graph = TestGraph([.ab.makeDismissable()])
+        let helm = try Helm(nav: graph)
+
+        helm.present(fragment: .b, id: 1)
+
+        XCTAssertFalse(helm.isPresented(.a))
+        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertTrue(helm.isPresented(.b, id: 1))
+
+        helm.dismiss(fragment: .b)
+
+        XCTAssertTrue(helm.isPresented(.a))
+        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertFalse(helm.isPresented(.b, id: 1))
     }
 }
