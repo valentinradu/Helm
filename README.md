@@ -170,7 +170,7 @@ Finally, we can use Helm. Be sure to check the interface documentation for each 
 
 ```swift
 struct DashboardView: View {
-    @EnvironmentObject private var _helm: Helm<KeyScreen>
+    @EnvironmentObject private var _helm: Helm<PlaygroundFragment>
 
     var body: some View {
         VStack {
@@ -185,17 +185,17 @@ struct DashboardView: View {
                     .tabItem {
                         Label("Library", systemImage: "book.closed")
                     }
-                    .tag(Optional.some(KeyScreen.library))
+                    .tag(Optional.some(PlaygroundFragment.library))
                 NewsView()
                     .tabItem {
                         Label("News", systemImage: "newspaper")
                     }
-                    .tag(Optional.some(KeyScreen.news))
+                    .tag(Optional.some(PlaygroundFragment.news))
                 SettingsView()
                     .tabItem {
                         Label("Settings", systemImage: "gearshape.fill")
                     }
-                    .tag(Optional.some(KeyScreen.settings))
+                    .tag(Optional.some(PlaygroundFragment.settings))
             }
         }
         .sheet(isPresented: _helm.isPresented(.compose)) {

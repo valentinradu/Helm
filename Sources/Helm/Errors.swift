@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum HelmError<N: Fragment>: Equatable, Error {
+public enum HelmError<N: Fragment>: Equatable, LocalizedError {
     case empty
     case emptyPath
     case missingInlets
@@ -63,9 +63,13 @@ extension HelmError: CustomStringConvertible {
             return "No segue from a presented fragment to \(fragment)"
         }
     }
+    
+    public var errorDescription: String? {
+        description
+    }
 }
 
-public enum DirectedEdgeCollectionError<E: DirectedConnector>: Equatable, Error {
+public enum DirectedEdgeCollectionError<E: DirectedConnector>: Equatable, LocalizedError {
     case ambiguousEgressEdges(Set<E>, from: E.N)
     case ambiguousIngressEdges(Set<E>, to: E.N)
     case missingEgressEdges(from: E.N)
@@ -84,5 +88,9 @@ extension DirectedEdgeCollectionError: CustomStringConvertible {
         case let .missingIngressEdges(node):
             return "Missing ingress edges towards \(node)."
         }
+    }
+    
+    public var errorDescription: String? {
+        description
     }
 }

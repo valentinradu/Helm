@@ -121,7 +121,12 @@ public class Helm<N: Fragment>: ObservableObject {
     }
 
     public func present(fragment: N) {
-        present(fragment: fragment, id: String?.none)
+        do {
+            let segue = try presentableSegue(for: fragment)
+            try present(pathEdge: PathEdge(segue.edge))
+        } catch {
+            errors.append(error)
+        }
     }
 
     /// Presents a fragment.
@@ -131,37 +136,20 @@ public class Helm<N: Fragment>: ObservableObject {
     /// - parameter fragment: The given fragment.
     public func present<ID>(fragment: N, id: ID? = nil) where ID: PathFragmentIdentifier {
         do {
-            if path.isEmpty {
-                let segue: HelmSegue
-                do {
-                    segue = try nav.inlets.uniqueIngressEdge(for: fragment)
-                } catch {
-                    throw ConcreteHelmError.missingSegueToFragment(fragment)
-                }
-
-                try present(pathEdge: PathEdge(segue.edge, id: id))
-            } else {
-                let segues = presentedFragments
-                    .reversed()
-                    .flatMap {
-                        nav
-                            .egressEdges(for: $0.wrappedValue)
-                            .ingressEdges(for: fragment)
-                    }
-
-                guard let segue = segues.first else {
-                    throw ConcreteHelmError.missingSegueToFragment(fragment)
-                }
-
-                try present(pathEdge: PathEdge(segue.edge, id: id))
-            }
+            let segue = try presentableSegue(for: fragment)
+            try present(pathEdge: PathEdge(segue.edge, id: id))
         } catch {
             errors.append(error)
         }
     }
 
     public func present<T>(tag: T) where T: SegueTag {
-        present(tag: tag, id: String?.none)
+        do {
+            let segue = try presentableSegue(with: tag)
+            try present(pathEdge: PathEdge(segue.edge))
+        } catch {
+            errors.append(error)
+        }
     }
 
     /// Presents a fragment by triggering a segue with a specific tag.
@@ -170,18 +158,7 @@ public class Helm<N: Fragment>: ObservableObject {
     /// - parameter tag: The tag to look after.
     public func present<T, ID>(tag: T, id: ID?) where ID: PathFragmentIdentifier, T: SegueTag {
         do {
-            let segues = presentedFragments
-                .reversed()
-                .flatMap {
-                    nav
-                        .egressEdges(for: $0.wrappedValue)
-                        .filter { $0.tag == AnyHashable(tag) }
-                }
-
-            guard let segue = segues.last else {
-                throw ConcreteHelmError.missingTaggedSegue(name: AnyHashable(tag))
-            }
-
+            let segue = try presentableSegue(with: tag)
             try present(pathEdge: PathEdge(segue.edge, id: id))
         } catch {
             errors.append(error)
@@ -189,7 +166,12 @@ public class Helm<N: Fragment>: ObservableObject {
     }
 
     public func forward() {
-        forward(id: String?.none)
+        do {
+            let segue = try presentableForwardSegue()
+            try present(pathEdge: PathEdge(segue.edge))
+        } catch {
+            errors.append(error)
+        }
     }
 
     /// Presents the next fragment by triggering the sole egress segue of the latest fragment in the path.
@@ -197,14 +179,7 @@ public class Helm<N: Fragment>: ObservableObject {
     /// If the fragment has no segue, the operation fails
     public func forward<ID>(id: ID?) where ID: PathFragmentIdentifier {
         do {
-            let fragment = try presentedFragments.last.unwrap()
-            let segue: HelmSegue
-            do {
-                segue = try nav.uniqueEgressEdge(for: fragment.wrappedValue)
-            } catch {
-                throw ConcreteHelmError.ambiguousForwardFromFragment(fragment.wrappedValue)
-            }
-
+            let segue = try presentableForwardSegue()
             try present(pathEdge: PathEdge(segue.edge, id: id))
         } catch {
             errors.append(error)
@@ -213,10 +188,7 @@ public class Helm<N: Fragment>: ObservableObject {
 
     public func present(pathEdge: PathEdge<N>) throws {
         _ = try segue(for: pathEdge.edge)
-
-        guard isPresented(pathEdge.from.wrappedValue, id: pathEdge.from.id) else {
-            throw ConcreteHelmError.fragmentNotPresented(pathEdge.from.wrappedValue)
-        }
+        try isPresentable(fragment: pathEdge.from.wrappedValue)
 
         path.append(pathEdge)
 
@@ -228,6 +200,84 @@ public class Helm<N: Fragment>: ObservableObject {
         }
     }
 
+    public func isPresentable(fragment: N) throws {
+        if !presentedFragments
+            .map(\.wrappedValue)
+            .contains(fragment)
+        {
+            throw ConcreteHelmError.fragmentNotPresented(fragment)
+        }
+    }
+
+    public func canPresent(fragment: N) -> Bool {
+        do {
+            _ = try presentableSegue(for: fragment)
+            try isPresentable(fragment: fragment)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    public func canPresent<T>(using tag: T) -> Bool where T: SegueTag {
+        do {
+            let segue = try presentableSegue(with: tag)
+            try isPresentable(fragment: segue.to)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    public func presentableSegue(for fragment: N) throws -> HelmSegue {
+        if path.isEmpty {
+            do {
+                return try nav.inlets.uniqueIngressEdge(for: fragment)
+            } catch {
+                throw ConcreteHelmError.missingSegueToFragment(fragment)
+            }
+        } else {
+            let segues = presentedFragments
+                .reversed()
+                .flatMap {
+                    nav
+                        .egressEdges(for: $0.wrappedValue)
+                        .ingressEdges(for: fragment)
+                }
+
+            guard let segue = segues.first else {
+                throw ConcreteHelmError.missingSegueToFragment(fragment)
+            }
+
+            return segue
+        }
+    }
+
+    public func presentableSegue<T>(with tag: T) throws -> HelmSegue where T: SegueTag {
+        let segues = presentedFragments
+            .reversed()
+            .flatMap {
+                nav
+                    .egressEdges(for: $0.wrappedValue)
+                    .filter { $0.tag == AnyHashable(tag) }
+            }
+
+        guard let segue = segues.last else {
+            throw ConcreteHelmError.missingTaggedSegue(name: AnyHashable(tag))
+        }
+
+        return segue
+    }
+
+    public func presentableForwardSegue() throws -> HelmSegue {
+        let fragment = try presentedFragments.last.unwrap()
+        do {
+            return try nav.uniqueEgressEdge(for: fragment.wrappedValue)
+        } catch {
+            throw ConcreteHelmError.ambiguousForwardFromFragment(fragment.wrappedValue)
+        }
+    }
+
     /// Dismisses a fragment.
     /// If the fragment is not already presented, the operation fails.
     /// If the fragment has no dismissable ingress segues, the operation fails.
@@ -235,17 +285,7 @@ public class Helm<N: Fragment>: ObservableObject {
     /// - parameter fragment: The given fragment.
     public func dismiss(fragment: N) {
         do {
-            let segues = nav
-                .ingressEdges(for: fragment)
-                .filter { $0.dismissable }
-
-            guard let pathEdge = path
-                .reversed()
-                .first(where: { segues.map(\.edge).contains($0.edge) })
-            else {
-                throw ConcreteHelmError.fragmentMissingDismissableSegue(fragment)
-            }
-
+            let pathEdge = try dismissablePathEdge(for: fragment)
             try dismiss(pathEdge: pathEdge)
         } catch {
             errors.append(error)
@@ -257,13 +297,7 @@ public class Helm<N: Fragment>: ObservableObject {
     /// - parameter tag: The tag to look after.
     public func dismiss<T>(tag: T) where T: SegueTag {
         do {
-            let segues = nav.filter { $0.tag == AnyHashable(tag) }
-
-            guard let pathEdge = path.reversed().first(where: { segues.map(\.edge).contains($0.edge) })
-            else {
-                throw ConcreteHelmError.missingTaggedSegue(name: AnyHashable(tag))
-            }
-
+            let pathEdge = try dismissablePathEdge(with: tag)
             try dismiss(pathEdge: pathEdge)
         } catch {
             errors.append(error)
@@ -274,11 +308,8 @@ public class Helm<N: Fragment>: ObservableObject {
     /// The operation fails if the latest fragment in the path has no dismissable ingress segue.
     public func dismiss() {
         do {
-            guard let pathComponent = path.last else {
-                throw ConcreteHelmError.emptyPath
-            }
-
-            try dismiss(pathEdge: pathComponent)
+            let pathEdge = try dismissableBackwardPathEdge()
+            try dismiss(pathEdge: pathEdge)
         } catch {
             errors.append(error)
         }
@@ -286,17 +317,7 @@ public class Helm<N: Fragment>: ObservableObject {
 
     /// Triggers a segue dismissing its out node.
     public func dismiss(pathEdge: PathEdge<N>) throws {
-        guard let segue = try? segue(for: pathEdge.edge) else {
-            throw ConcreteHelmError.missingSegueForEdge(pathEdge.edge)
-        }
-
-        guard segue.dismissable else {
-            throw ConcreteHelmError.segueNotDismissable(segue)
-        }
-
-        guard path.contains(pathEdge) else {
-            throw ConcreteHelmError.missingPathEdge(segue)
-        }
+        try isDismissable(pathEdge: pathEdge)
 
         for ingressSegue in path.ingressEdges(for: pathEdge.to) {
             path.remove(ingressSegue)
@@ -310,6 +331,87 @@ public class Helm<N: Fragment>: ObservableObject {
             .flatMap { $0 }
 
         path = path.subtracting(removables)
+    }
+
+    public func dismissablePathEdge(for fragment: N) throws -> PathEdge<N> {
+        let segues = nav
+            .ingressEdges(for: fragment)
+            .filter { $0.dismissable }
+
+        guard let pathEdge = path
+            .reversed()
+            .first(where: { segues.map(\.edge).contains($0.edge) })
+        else {
+            throw ConcreteHelmError.fragmentMissingDismissableSegue(fragment)
+        }
+
+        try isDismissable(pathEdge: pathEdge)
+
+        return pathEdge
+    }
+
+    public func dismissablePathEdge<T>(with tag: T) throws -> PathEdge<N> where T: SegueTag {
+        let segues = nav.filter { $0.tag == AnyHashable(tag) }
+
+        guard let pathEdge = path.reversed().first(where: { segues.map(\.edge).contains($0.edge) })
+        else {
+            throw ConcreteHelmError.missingTaggedSegue(name: AnyHashable(tag))
+        }
+
+        try isDismissable(pathEdge: pathEdge)
+
+        return pathEdge
+    }
+
+    public func dismissableBackwardPathEdge() throws -> PathEdge<N> {
+        guard let pathEdge = path.last else {
+            throw ConcreteHelmError.emptyPath
+        }
+
+        try isDismissable(pathEdge: pathEdge)
+
+        return pathEdge
+    }
+
+    public func isDismissable(pathEdge: PathEdge<N>) throws {
+        guard let segue = try? segue(for: pathEdge.edge) else {
+            throw ConcreteHelmError.missingSegueForEdge(pathEdge.edge)
+        }
+
+        guard segue.dismissable else {
+            throw ConcreteHelmError.segueNotDismissable(segue)
+        }
+
+        guard path.contains(pathEdge) else {
+            throw ConcreteHelmError.missingPathEdge(segue)
+        }
+    }
+
+    public func canDismiss(fragment: N) -> Bool {
+        do {
+            _ = try dismissablePathEdge(for: fragment)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    public func canDismiss<T>(using tag: T) -> Bool where T: SegueTag {
+        do {
+            _ = try dismissablePathEdge(with: tag)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    public func canDismiss() -> Bool {
+        do {
+            _ = try dismissableBackwardPathEdge()
+            return true
+        } catch {
+            return false
+        }
     }
 
     /// Replaces the entire current presented path an re-validates it.
@@ -363,11 +465,15 @@ public class Helm<N: Fragment>: ObservableObject {
         Binding {
             self.isPresented(fragment, id: id)
         }
-        set: {
+        set: { [self] in
             if $0 {
-                self.present(fragment: fragment, id: id)
+                if !isPresented(fragment, id: id) {
+                    present(fragment: fragment, id: id)
+                }
             } else {
-                self.dismiss(fragment: fragment)
+                if isPresented(fragment, id: id) {
+                    dismiss(fragment: fragment)
+                }
             }
         }
     }

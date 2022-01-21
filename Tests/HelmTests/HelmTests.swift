@@ -377,4 +377,23 @@ class HelmTests: XCTestCase {
         XCTAssertFalse(helm.isPresented(.b))
         XCTAssertFalse(helm.isPresented(.b, id: 1))
     }
+    
+    func testFragmentIdentityBinding() throws {
+        let graph = TestGraph([.ab.makeDismissable()])
+        let helm = try Helm(nav: graph)
+        
+        let binding: Binding<Bool> = helm.isPresented(.b, id: 1)
+        
+        binding.wrappedValue = true
+        
+        XCTAssertFalse(helm.isPresented(.a))
+        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertTrue(helm.isPresented(.b, id: 1))
+        
+        binding.wrappedValue = false
+        
+        XCTAssertTrue(helm.isPresented(.a))
+        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertFalse(helm.isPresented(.b, id: 1))
+    }
 }
