@@ -51,6 +51,33 @@ class HelmTests: XCTestCase {
         XCTAssertEqual(helm.entry, .a)
     }
 
+    func testAutoEntry() throws {
+        let graph = TestGraph([.ab.makeAuto(), .ac, .ad])
+        let helm = try Helm(nav: graph)
+
+        XCTAssertTrue(helm.isPresented(.b))
+    }
+
+    func testCyclicPath() throws {
+        let graph = TestGraph([.ab, .bc, .cb])
+        let helm = try Helm(nav: graph, path: [.ab])
+
+        helm.present(fragment: .c)
+
+        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertTrue(helm.isPresented(.c))
+
+        helm.present(fragment: .b)
+
+        XCTAssertTrue(helm.isPresented(.b))
+        XCTAssertFalse(helm.isPresented(.c))
+
+        helm.present(fragment: .c)
+
+        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertTrue(helm.isPresented(.c))
+    }
+
     func testIsPresented() throws {
         let graph = TestGraph([.ab].makeDismissable())
         let helm = try Helm(nav: graph, path: [.ab])
@@ -161,16 +188,6 @@ class HelmTests: XCTestCase {
         XCTAssertTrue(helm.isPresented(.b))
         XCTAssertEqual(helm.path, [.ab])
         XCTAssertEqual(helm.errors as? [TestGraphError], [])
-    }
-
-    func testPresentEdgeFail() throws {
-        let graph = TestGraph([.ab, .bc, .cd])
-        let helm = try Helm(nav: graph, path: [.ab])
-
-        XCTAssertThrowsError(try helm.present(pathEdge: .db),
-                             TestGraphError.missingSegueForEdge(.db).description)
-        XCTAssertThrowsError(try helm.present(pathEdge: .cd),
-                             TestGraphError.fragmentNotPresented(.c).description)
     }
 
     func testPresentEdge() throws {
@@ -377,21 +394,21 @@ class HelmTests: XCTestCase {
         XCTAssertFalse(helm.isPresented(.b))
         XCTAssertFalse(helm.isPresented(.b, id: 1))
     }
-    
+
     func testFragmentIdentityBinding() throws {
         let graph = TestGraph([.ab.makeDismissable()])
         let helm = try Helm(nav: graph)
-        
+
         let binding: Binding<Bool> = helm.isPresented(.b, id: 1)
-        
+
         binding.wrappedValue = true
-        
+
         XCTAssertFalse(helm.isPresented(.a))
         XCTAssertFalse(helm.isPresented(.b))
         XCTAssertTrue(helm.isPresented(.b, id: 1))
-        
+
         binding.wrappedValue = false
-        
+
         XCTAssertTrue(helm.isPresented(.a))
         XCTAssertFalse(helm.isPresented(.b))
         XCTAssertFalse(helm.isPresented(.b, id: 1))

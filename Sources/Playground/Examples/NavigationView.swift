@@ -66,6 +66,5 @@ struct NavigationViewExample_Previews: PreviewProvider {
 
     static var previews: some View {
         PreviewWrapper()
-            .previewLayout(PreviewLayout.sizeThatFits)
     }
 }
