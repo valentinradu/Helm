@@ -63,7 +63,7 @@ extension HelmError: CustomStringConvertible {
             return "No segue from a presented fragment to \(fragment)"
         }
     }
-    
+
     public var errorDescription: String? {
         description
     }
@@ -89,7 +89,7 @@ extension DirectedEdgeCollectionError: CustomStringConvertible {
             return "Missing ingress edges towards \(node)."
         }
     }
-    
+
     public var errorDescription: String? {
         description
     }

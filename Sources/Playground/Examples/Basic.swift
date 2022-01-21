@@ -55,7 +55,7 @@ struct BasicExample: View {
 struct BasicExample_Previews: PreviewProvider {
     struct PreviewWrapper: View {
         @StateObject private var _helm: Helm = try! Helm(nav: [
-            PlaygroundSegue(.a => .b).makeDismissable()
+            PlaygroundSegue(.a => .b).makeDismissable(),
         ])
 
         var body: some View {

@@ -38,12 +38,13 @@ Helm is a declarative, graph-based routing library for SwiftUI. It fully describ
 
 ### The navigation graph
 
-In Helm, navigation rules are defined in a graph structure using fragments and segues. Fragments are dynamic sections of an app, some are screens, others overlapping views (like a sliding player in a music listening app).
+In Helm navigation rules are defined in a graph structure using fragments and segues. Fragments are dynamic sections of an app, some are screens, others overlapping views (like a sliding player in a music listening app).
 Segues are directed edges used to specify rules between two fragments, such as the presentation style or the auto flag (more about these [below](#segues)).
 
 ### The presented path
 
 Unlike traditional routers, Helm uses an ordered set of edges to represent the path. This allows querying the presented fragments and the steps needed to reach them while enabling multilayered UIs.
+The path can also have an optional id assigned to each of its fragments. These are used to present dynamic data from the same fragment. (i.e. in a master-detail list the `.detail` fragment would need the currently presented item's id.) 
 
 ### Transitions
 

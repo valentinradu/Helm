@@ -51,7 +51,7 @@ public struct PathEdge<N: Fragment>: Hashable, DirectedConnector {
     }
 }
 
-/// A fragment in a path. Unlike regular fragments, path fragments have an additional id that can be used to distinguish between fragments with the same name by different data (i.e. in master-details list `(fragment: .details, id: 1)` is different from `(fragment: .details, id: 2)`.
+/// A fragment in a path. Unlike regular fragments, path fragments have an additional id that can be used to distinguish between fragments with the same name by different data (i.e. in master-detail list `(fragment: .detail, id: 1)` is different from `(fragment: .details, id: 2)`.
 public struct PathFragment<N: Fragment>: Fragment {
     public let wrappedValue: N
     public let id: AnyHashable?
