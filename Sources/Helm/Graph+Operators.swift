@@ -32,6 +32,14 @@ public func => <N: Node>(lhs: Set<N>, rhs: N) -> Set<DirectedEdge<N>> {
     })
 }
 
+public func => <N: Node>(lhs: Set<N>, rhs: Set<N>) -> Set<DirectedEdge<N>> {
+    return Set(lhs.flatMap { edge in
+        rhs.map {
+            DirectedEdge(from: edge, to: $0)
+        }
+    })
+}
+
 public func => <N: Node>(lhs: DirectedEdge<N>, rhs: N) -> Set<DirectedEdge<N>> {
     return [
         lhs,

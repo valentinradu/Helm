@@ -14,7 +14,6 @@ struct ContenView: View {
     let title: String
     var body: some View {
         Text("This is \(title)")
-            .navigationBarBackButtonHidden(!_helm.canDismiss())
     }
 }
 

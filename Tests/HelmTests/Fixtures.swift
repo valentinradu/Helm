@@ -26,17 +26,21 @@ enum TestTag: SegueTag {
 }
 
 extension DirectedEdge where N == TestNode {
+    static var aa: Self { .a => .a }
     static var ab: Self { .a => .b }
     static var ac: Self { .a => .c }
     static var ad: Self { .a => .d }
     static var ba: Self { .b => .a }
     static var bc: Self { .b => .c }
+    static var bb: Self { .b => .b }
     static var bd: Self { .b => .d }
     static var be: Self { .b => .e }
     static var cb: Self { .c => .b }
     static var cd: Self { .c => .d }
+    static var ca: Self { .c => .a }
     static var ce: Self { .c => .e }
     static var ch: Self { .c => .h }
+    static var cc: Self { .c => .c }
     static var db: Self { .d => .b }
     static var de: Self { .d => .e }
     static var df: Self { .d => .f }
@@ -48,14 +52,18 @@ extension DirectedEdge where N == TestNode {
 }
 
 extension PathEdge where N == TestNode {
+    static var aa: Self { .init(.a => .a) }
     static var ab: Self { .init(.a => .b) }
     static var ac: Self { .init(.a => .c) }
     static var ad: Self { .init(.a => .d) }
     static var ba: Self { .init(.b => .a) }
+    static var bb: Self { .init(.b => .b) }
     static var bc: Self { .init(.b => .c) }
     static var bd: Self { .init(.b => .d) }
     static var be: Self { .init(.b => .e) }
+    static var ca: Self { .init(.c => .a) }
     static var cb: Self { .init(.c => .b) }
+    static var cc: Self { .init(.c => .c) }
     static var cd: Self { .init(.c => .d) }
     static var ce: Self { .init(.c => .e) }
     static var ch: Self { .init(.c => .h) }
@@ -70,20 +78,24 @@ extension PathEdge where N == TestNode {
 }
 
 extension Segue where N == TestNode {
+    static var aa: Self { .init(from: .a, to: .a) }
     static var ab: Self { .init(from: .a, to: .b) }
     static var ac: Self { .init(from: .a, to: .c) }
     static var ad: Self { .init(from: .a, to: .d) }
     static var ba: Self { .init(from: .b, to: .a) }
     static var bc: Self { .init(from: .b, to: .c) }
     static var bd: Self { .init(from: .b, to: .d) }
+    static var bb: Self { .init(from: .b, to: .b) }
     static var be: Self { .init(from: .b, to: .e) }
     static var cb: Self { .init(from: .c, to: .b) }
     static var cd: Self { .init(from: .c, to: .d) }
     static var ce: Self { .init(from: .c, to: .e) }
     static var ch: Self { .init(from: .c, to: .h) }
+    static var ca: Self { .init(from: .c, to: .a) }
     static var db: Self { .init(from: .d, to: .b) }
     static var de: Self { .init(from: .d, to: .e) }
     static var df: Self { .init(from: .d, to: .f) }
+    static var cc: Self { .init(from: .c, to: .c) }
     static var dg: Self { .init(from: .d, to: .g) }
     static var dh: Self { .init(from: .d, to: .h) }
     static var hf: Self { .init(from: .h, to: .f) }
