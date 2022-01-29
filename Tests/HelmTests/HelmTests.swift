@@ -126,18 +126,23 @@ class HelmTests: XCTestCase {
     }
 
     func testDismissLastFail() throws {
-        let graph = TestGraph([.ab] + [.bc].makeDismissable())
+        let graph = TestGraph([.ab] + [.bc])
         let helm = try Helm(nav: graph)
 
         helm.dismiss()
+        helm.present(fragment: .b)
+        helm.present(fragment: .c)
+        helm.dismiss()
 
-        XCTAssertTrue(helm.isPresented(.a))
-        XCTAssertEqual(helm.errors.count, 1)
+        XCTAssertEqual(helm.errors as? [TestGraphError], [
+            TestGraphError.emptyPath,
+            TestGraphError.noDismissableSegues
+        ])
     }
 
     func testDismissLast() throws {
-        let graph = TestGraph([.ab] + [.bc].makeDismissable())
-        let helm = try Helm(nav: graph, path: [.ab, .bc])
+        let graph = TestGraph([.ab] + [.bc].makeDismissable() + [.cd])
+        let helm = try Helm(nav: graph, path: [.ab, .bc, .cd])
 
         helm.dismiss()
 

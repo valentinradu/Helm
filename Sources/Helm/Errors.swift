@@ -24,6 +24,7 @@ public enum HelmError<N: Fragment>: Equatable, LocalizedError {
     case ambiguousForwardFromFragment(N)
     case fragmentMissingDismissableSegue(N)
     case segueNotDismissable(Segue<N>)
+    case noDismissableSegues
 }
 
 extension HelmError: CustomStringConvertible {
@@ -52,7 +53,7 @@ extension HelmError: CustomStringConvertible {
         case .ambiguousInlets:
             return "The navigation graph should only have one entry point."
         case let .ambiguousForwardFromFragment(fragment):
-            return "Ambiguous forward navigation. Multiple segues leave \(fragment)"
+            return "Ambiguous forward navigation. Multiple segues leave \(fragment)."
         case let .oneEdgeToManySegues(segues):
             return "Multiple segues (\(segues)) for the same edge."
         case let .missingPathEdge(edge):
@@ -60,7 +61,9 @@ extension HelmError: CustomStringConvertible {
         case let .missingSegueForEdge(edge):
             return "No segue found for \(edge)"
         case let .missingSegueToFragment(fragment):
-            return "No segue from a presented fragment to \(fragment)"
+            return "No segue from a presented fragment to \(fragment)."
+        case .noDismissableSegues:
+            return "None of the presented fragments have dismissable segues."
         }
     }
 

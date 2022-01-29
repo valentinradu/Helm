@@ -385,13 +385,19 @@ extension Helm {
     }
 
     func dismissableBackwardPathEdge() throws -> PathEdge<N> {
-        guard let pathEdge = path.last else {
+        guard path.count > 0 else {
             throw ConcreteHelmError.emptyPath
         }
 
-        try isDismissable(pathEdge: pathEdge)
+        for pathEdge in path.reversed() {
+            do {
+                try isDismissable(pathEdge: pathEdge)
 
-        return pathEdge
+                return pathEdge
+            } catch ConcreteHelmError.segueNotDismissable {}
+        }
+        
+        throw ConcreteHelmError.noDismissableSegues
     }
 
     func isDismissable(pathEdge: PathEdge<N>) throws {
