@@ -49,6 +49,12 @@ public struct PathEdge<N: Fragment>: Hashable, DirectedConnector {
         DirectedEdge(from: from.wrappedValue,
                      to: to.wrappedValue)
     }
+
+    /// Returns the inverted path edge
+    public var inverted: Self {
+        PathEdge(.init(from: to.wrappedValue,
+                       to: from.wrappedValue))
+    }
 }
 
 /// A fragment in a path. Unlike regular fragments, path fragments have an additional id that can be used to distinguish between fragments with the same name by different data (i.e. in master-detail list `(fragment: .detail, id: 1)` is different from `(fragment: .details, id: 2)`.

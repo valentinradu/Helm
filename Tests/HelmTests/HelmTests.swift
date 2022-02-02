@@ -418,4 +418,17 @@ class HelmTests: XCTestCase {
         XCTAssertFalse(helm.isPresented(.b))
         XCTAssertFalse(helm.isPresented(.b, id: 1))
     }
+    
+    func testDisconectedNodes() throws {
+        let graph = TestGraph([.ab, .bc, .cb, .cd.with(style: .hold)])
+        let helm = try Helm(nav: graph, path: [.ab, .bc, .cd])
+        
+        XCTAssertTrue(helm.isPresented(.c))
+        XCTAssertTrue(helm.isPresented(.d))
+        
+        helm.present(fragment: .b)
+        
+        XCTAssertFalse(helm.isPresented(.c))
+        XCTAssertFalse(helm.isPresented(.d))
+    }
 }

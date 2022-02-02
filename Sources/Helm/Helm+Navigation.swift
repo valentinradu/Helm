@@ -172,6 +172,24 @@ public extension Helm {
 // Present-related private methods
 extension Helm {
     func present(pathEdge: PathEdge<N>) throws {
+        if path.contains(pathEdge.inverted) {
+            for ingressSegue in path.ingressEdges(for: pathEdge.from) {
+                path.remove(ingressSegue)
+            }
+
+            let removables = path
+                .disconnectedSubgraphs
+                .filter {
+                    !$0.has(node: pathEdge.to)
+                }
+                .flatMap { $0 }
+
+            path = path.subtracting(removables)
+            return
+        }
+        
+        // we do this because order matters
+        // we first remove any previous equal edge
         path = path.subtracting([pathEdge])
         path.append(pathEdge)
 
@@ -396,7 +414,7 @@ extension Helm {
                 return pathEdge
             } catch ConcreteHelmError.segueNotDismissable {}
         }
-        
+
         throw ConcreteHelmError.noDismissableSegues
     }
 
