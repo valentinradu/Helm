@@ -172,25 +172,6 @@ public extension Helm {
 // Present-related private methods
 extension Helm {
     func present(pathEdge: PathEdge<N>) throws {
-        let segue = try segue(for: pathEdge.edge)
-        if segue.style != .hold {
-            for egressSegue in path.egressEdges(for: pathEdge.from) {
-                path.remove(egressSegue)
-            }
-
-            let removables = path
-                .disconnectedSubgraphs
-                .filter {
-                    !$0.has(node: pathEdge.from)
-                }
-                .flatMap { $0 }
-
-            path = path.subtracting(removables)
-        }
-        
-        // we do this because order matters
-        // we first remove any previous equal edge
-        path = path.subtracting([pathEdge])
         path.append(pathEdge)
 
         if let autoSegue = autoPresentableSegue(from: pathEdge.to.wrappedValue) {
@@ -357,19 +338,8 @@ public extension Helm {
 extension Helm {
     func dismiss(pathEdge: PathEdge<N>) throws {
         try isDismissable(pathEdge: pathEdge)
-
-        for ingressSegue in path.ingressEdges(for: pathEdge.to) {
-            path.remove(ingressSegue)
-        }
-
-        let removables = path
-            .disconnectedSubgraphs
-            .filter {
-                !$0.has(node: pathEdge.from)
-            }
-            .flatMap { $0 }
-
-        path = path.subtracting(removables)
+        let graphPath = trimmedGraphPath(from: pathEdge)
+        path = path.filter { graphPath.contains($0) }
     }
 
     func dismissablePathEdge(for fragment: N) throws -> PathEdge<N> {

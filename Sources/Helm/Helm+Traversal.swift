@@ -5,6 +5,7 @@
 //  Created by Valentin Radu on 21/01/2022.
 //
 
+import Collections
 import Foundation
 
 public extension Helm {
@@ -34,11 +35,40 @@ extension Helm {
             case .hold:
                 result.append(pathEdge.to)
             case .pass:
-                result.remove(pathEdge.from)
+                if let index = path.firstIndex(where: { $0.to == pathEdge.from }) {
+                    let graphPath = trimmedGraphPath(from: path[index])
+
+                    result = OrderedSet(result.filter {
+                        graphPath.has(node: $0)
+                    })
+                }
+                else {
+                    result.remove(pathEdge.from)
+                }
                 result.append(pathEdge.to)
             }
         }
 
         return result
+    }
+
+    func trimmedGraphPath(from pathEdge: PathEdge<N>) -> Set<PathEdge<N>> {
+        var pathGraph = Set(path)
+        let ingressEdges = pathGraph.ingressEdges(for: pathEdge.to)
+        let egressEdges = pathGraph.egressEdges(for: pathEdge.to)
+        for edge in ingressEdges.union(egressEdges) {
+            pathGraph.remove(edge)
+        }
+
+        let removables = pathGraph
+            .disconnectedSubgraphs
+            .filter {
+                !$0.has(node: pathEdge.from)
+            }
+            .flatMap { $0 }
+
+        pathGraph.subtract(removables)
+
+        return pathGraph
     }
 }

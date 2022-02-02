@@ -56,7 +56,7 @@ public extension Helm {
             if nextSegues.count > 0 {
                 stack.append(contentsOf: nextSegues.map {
                     let nextPathComponent = PathEdge<N>(segue.edge)
-                    let nextPath = path.union([nextPathComponent])
+                    let nextPath = path + [nextPathComponent]
                     return (nextPath, $0)
                 })
             } else {
