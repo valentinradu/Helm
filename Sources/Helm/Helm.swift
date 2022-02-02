@@ -13,7 +13,7 @@ import SwiftUI
 public enum PathTransition<N: Fragment>: Hashable {
     case present(pathEdge: PathEdge<N>)
     case dismiss(pathEdge: PathEdge<N>)
-    case replace(path: [PathEdge<N>])
+    case replace(path: OrderedSet<PathEdge<N>>)
 }
 
 /// A fragment identifier used to distinguish fragments that have the same name, but display different data (i.e. a master detail list)
@@ -88,7 +88,7 @@ public class Helm<N: Fragment>: ObservableObject {
     public typealias HelmGraph = Set<HelmSegue>
     public typealias HelmGraphEdge = DirectedEdge<N>
     public typealias HelmTransition = PathTransition<N>
-    public typealias HelmPath = [PathEdge<N>]
+    public typealias HelmPath = OrderedSet<PathEdge<N>>
     public typealias HelmPathFragments = OrderedSet<PathFragment<N>>
     internal typealias ConcreteHelmError = HelmError<N>
 

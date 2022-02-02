@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import OrderedCollections
 
 // Present-related methods
 public extension Helm {
@@ -172,6 +173,7 @@ public extension Helm {
 // Present-related private methods
 extension Helm {
     func present(pathEdge: PathEdge<N>) throws {
+        path = OrderedSet(path.prefix(while: { pathEdge != $0 }))
         path.append(pathEdge)
 
         if let autoSegue = autoPresentableSegue(from: pathEdge.to.wrappedValue) {
@@ -338,8 +340,7 @@ public extension Helm {
 extension Helm {
     func dismiss(pathEdge: PathEdge<N>) throws {
         try isDismissable(pathEdge: pathEdge)
-        let graphPath = trimmedGraphPath(from: pathEdge)
-        path = path.filter { graphPath.contains($0) }
+        path = breakPath(pathEdge: pathEdge)
     }
 
     func dismissablePathEdge(for fragment: N) throws -> PathEdge<N> {

@@ -26,49 +26,53 @@ extension Helm {
 
     func calculatePresentedFragments() -> HelmPathFragments {
         var result: HelmPathFragments = [PathFragment(entry)]
+        var visited: HelmPathFragments = result
 
-        for pathEdge in path {
-            guard let segue = try? segue(for: pathEdge.edge) else {
-                return []
+        while true {
+            let fragment = result[result.count - 1]
+            if let nextEdge = path
+                .filter({ $0.from == fragment })
+                .last
+            {
+                guard let segue = try? segue(for: nextEdge.edge) else {
+                    break
+                }
+
+                if segue.style == .pass {
+                    result.removeLast()
+                }
+                result.append(nextEdge.to)
+
+                if visited.contains(nextEdge.to) {
+                    break
+                }
+                visited.append(nextEdge.to)
             }
-            switch segue.style {
-            case .hold:
-                result.append(pathEdge.to)
-            case .pass:
-                if let index = path.firstIndex(where: { $0.to == pathEdge.from }) {
-                    let graphPath = trimmedGraphPath(from: path[index])
-
-                    result = OrderedSet(result.filter {
-                        graphPath.has(node: $0)
-                    })
-                }
-                else {
-                    result.remove(pathEdge.from)
-                }
-                result.append(pathEdge.to)
+            else {
+                break
             }
         }
 
         return result
     }
 
-    func trimmedGraphPath(from pathEdge: PathEdge<N>) -> Set<PathEdge<N>> {
-        var pathGraph = Set(path)
-        let ingressEdges = pathGraph.ingressEdges(for: pathEdge.to)
-        let egressEdges = pathGraph.egressEdges(for: pathEdge.to)
+    func breakPath(pathEdge: PathEdge<N>) -> HelmPath {
+        var pathCopy = path
+        let ingressEdges = pathCopy.ingressEdges(for: pathEdge.to)
+        let egressEdges = pathCopy.egressEdges(for: pathEdge.to)
         for edge in ingressEdges.union(egressEdges) {
-            pathGraph.remove(edge)
+            pathCopy.remove(edge)
         }
 
-        let removables = pathGraph
+        let removables = pathCopy
             .disconnectedSubgraphs
             .filter {
                 !$0.has(node: pathEdge.from)
             }
             .flatMap { $0 }
 
-        pathGraph.subtract(removables)
+        pathCopy.subtract(removables)
 
-        return pathGraph
+        return pathCopy
     }
 }
