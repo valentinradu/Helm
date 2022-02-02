@@ -172,20 +172,20 @@ public extension Helm {
 // Present-related private methods
 extension Helm {
     func present(pathEdge: PathEdge<N>) throws {
-        if path.contains(pathEdge.inverted) {
-            for ingressSegue in path.ingressEdges(for: pathEdge.from) {
-                path.remove(ingressSegue)
+        let segue = try segue(for: pathEdge.edge)
+        if segue.style != .hold {
+            for egressSegue in path.egressEdges(for: pathEdge.from) {
+                path.remove(egressSegue)
             }
 
             let removables = path
                 .disconnectedSubgraphs
                 .filter {
-                    !$0.has(node: pathEdge.to)
+                    !$0.has(node: pathEdge.from)
                 }
                 .flatMap { $0 }
 
             path = path.subtracting(removables)
-            return
         }
         
         // we do this because order matters
