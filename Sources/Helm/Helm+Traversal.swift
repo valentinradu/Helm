@@ -26,14 +26,21 @@ extension Helm {
 
     func calculatePresentedFragments() -> HelmPathFragments {
         var result: HelmPathFragments = [PathFragment(entry)]
-        var visited: HelmPathFragments = result
+        var visited: HelmPath = []
 
+        var degree: Int = 0
         while true {
             let fragment = result[result.count - 1]
-            if let nextEdge = path
-                .filter({ $0.from == fragment })
-                .last
+            if let nextEdge = path.filter({ $0.from == fragment }).last,
+               let nextDegree = path.lastIndex(of: nextEdge),
+               degree <= nextDegree
             {
+                degree = nextDegree
+                if visited.contains(nextEdge) {
+                    break
+                }
+                visited.append(nextEdge)
+                
                 guard let segue = try? segue(for: nextEdge.edge) else {
                     break
                 }
@@ -42,11 +49,6 @@ extension Helm {
                     result.removeLast()
                 }
                 result.append(nextEdge.to)
-
-                if visited.contains(nextEdge.to) {
-                    break
-                }
-                visited.append(nextEdge.to)
             }
             else {
                 break

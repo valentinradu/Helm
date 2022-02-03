@@ -78,6 +78,24 @@ class HelmTests: XCTestCase {
         XCTAssertTrue(helm.isPresented(.c))
     }
 
+    func testHoldCyclicPath() throws {
+        let graph = TestGraph([.ab, .bc, .cd.with(style: .hold), .ce, .eb, .be])
+        let helm = try Helm(nav: graph, path: [.ab])
+
+        helm.present(fragment: .c)
+        helm.present(fragment: .d)
+        helm.present(fragment: .e)
+        helm.present(fragment: .b)
+        helm.present(fragment: .e)
+
+        XCTAssertEqual(helm.errors as? [TestGraphError], [])
+        XCTAssertFalse(helm.isPresented(.a))
+        XCTAssertFalse(helm.isPresented(.b))
+        XCTAssertFalse(helm.isPresented(.c))
+        XCTAssertFalse(helm.isPresented(.d))
+        XCTAssertTrue(helm.isPresented(.e))
+    }
+
     func testIsPresented() throws {
         let graph = TestGraph([.ab].makeDismissable())
         let helm = try Helm(nav: graph, path: [.ab])
@@ -136,7 +154,7 @@ class HelmTests: XCTestCase {
 
         XCTAssertEqual(helm.errors as? [TestGraphError], [
             TestGraphError.emptyPath,
-            TestGraphError.noDismissableSegues
+            TestGraphError.noDismissableSegues,
         ])
     }
 
@@ -418,16 +436,16 @@ class HelmTests: XCTestCase {
         XCTAssertFalse(helm.isPresented(.b))
         XCTAssertFalse(helm.isPresented(.b, id: 1))
     }
-    
+
     func testDisconectedPresentedNodes() throws {
         let graph = TestGraph([.ab, .bc, .ce, .cd.with(style: .hold)])
         let helm = try Helm(nav: graph, path: [.ab, .bc, .cd])
-        
+
         XCTAssertTrue(helm.isPresented(.c))
         XCTAssertTrue(helm.isPresented(.d))
-        
+
         helm.present(fragment: .e)
-        
+
         XCTAssertFalse(helm.isPresented(.c))
         XCTAssertFalse(helm.isPresented(.d))
     }

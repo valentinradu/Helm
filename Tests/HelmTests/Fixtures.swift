@@ -46,6 +46,7 @@ extension DirectedEdge where N == TestNode {
     static var df: Self { .d => .f }
     static var dg: Self { .d => .g }
     static var dh: Self { .d => .h }
+    static var eb: Self { .e => .b }
     static var hf: Self { .h => .f }
     static var hj: Self { .h => .j }
     static var jg: Self { .j => .g }
@@ -72,6 +73,7 @@ extension PathEdge where N == TestNode {
     static var df: Self { .init(.d => .f) }
     static var dg: Self { .init(.d => .g) }
     static var dh: Self { .init(.d => .h) }
+    static var eb: Self { .init(.e => .b) }
     static var hf: Self { .init(.h => .f) }
     static var hj: Self { .init(.h => .j) }
     static var jg: Self { .init(.j => .g) }
@@ -98,6 +100,7 @@ extension Segue where N == TestNode {
     static var cc: Self { .init(from: .c, to: .c) }
     static var dg: Self { .init(from: .d, to: .g) }
     static var dh: Self { .init(from: .d, to: .h) }
+    static var eb: Self { .init(from: .e, to: .b) }
     static var hf: Self { .init(from: .h, to: .f) }
     static var hj: Self { .init(from: .h, to: .j) }
     static var jg: Self { .init(from: .j, to: .g) }
