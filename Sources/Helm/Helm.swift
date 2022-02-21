@@ -103,7 +103,7 @@ public class Helm<N: Fragment>: ObservableObject {
     }
 
     /// The presented fragments.
-    @Published var presentedFragments: HelmPathFragments
+    @Published public private(set) var presentedFragments: HelmPathFragments
 
     /// All the errors triggered when navigating the graph.
     @Published public internal(set) var errors: [Swift.Error]
