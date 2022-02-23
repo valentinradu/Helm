@@ -27,36 +27,47 @@ public extension Helm {
                          identityProvider: PathFragmentIdentityProvider<ID>?) -> [HelmTransition] where ID: PathFragmentIdentifier
     {
         var result: [HelmTransition] = []
-        var visited: Set<HelmSegue> = []
-        let inlets = OrderedSet(nav.egressEdges(for: from ?? entry).sorted())
+        var visited: Set<PathEdge<N>> = []
+        let inlets = OrderedSet(
+            nav
+                .egressEdges(for: from ?? entry)
+                .sorted()
+                .map { segue in
+                    PathEdge(segue.edge,
+                             sourceId: nil,
+                             targetId: identityProvider.flatMap { $0(segue.edge) })
+                }
+        )
         guard inlets.count > 0 else {
             return []
         }
 
-        var stack: [(HelmPath, HelmSegue)] = inlets.map {
+        var stack: [(HelmPath, PathEdge<N>)] = inlets.map {
             ([], $0)
         }
 
         while stack.count > 0 {
-            let (path, segue) = stack.removeLast()
-            let pathEdge = PathEdge(segue.edge,
-                                    id: identityProvider.flatMap { $0(segue.edge) })
+            let (path, pathEdge) = stack.removeLast()
             let transition = HelmTransition.present(pathEdge: pathEdge)
 
             result.append(transition)
-            visited.insert(segue)
+            visited.insert(pathEdge)
 
-            let nextSegues = OrderedSet(
+            let nextEdges = OrderedSet(
                 nav
-                    .egressEdges(for: segue.to)
+                    .egressEdges(for: pathEdge.to.wrappedValue)
+                    .map { segue in
+                        PathEdge<N>(segue.edge,
+                                    sourceId: pathEdge.to.id,
+                                    targetId: identityProvider.flatMap { $0(segue.edge) })
+                    }
                     .filter { !visited.contains($0) }
                     .sorted()
             )
 
-            if nextSegues.count > 0 {
-                stack.append(contentsOf: nextSegues.map {
-                    let nextPathComponent = PathEdge<N>(segue.edge)
-                    let nextPath = path.union([nextPathComponent])
+            if nextEdges.count > 0 {
+                stack.append(contentsOf: nextEdges.map {
+                    let nextPath = path.union([pathEdge])
                     return (nextPath, $0)
                 })
             } else {

@@ -437,6 +437,38 @@ class HelmTests: XCTestCase {
         XCTAssertFalse(helm.isPresented(.b, id: 1))
     }
 
+    func testFragmentIdentityMatchFirst() throws {
+        let graph = TestGraph([.ab.makeDismissable()])
+        let helm = try Helm(nav: graph)
+
+        helm.present(fragment: .b, id: 1)
+
+        XCTAssertEqual(helm.matchFirst(.b), 1)
+        XCTAssertEqual(helm.matchFirst(.a), Int?.none)
+    }
+
+    func testFragmentIdentityMatchFirstButMany() throws {
+        let graph = TestGraph([.ab.makeDismissable(), .bb.with(style: .hold)])
+        let helm = try Helm(nav: graph)
+
+        helm.present(fragment: .b, id: 1)
+        helm.present(fragment: .b, id: 2)
+
+        XCTAssertEqual(helm.matchFirst(.b), Int?.none)
+        XCTAssertEqual(helm.matchFirst(.a), Int?.none)
+    }
+
+    func testFragmentIdentityMatchAll() throws {
+        let graph = TestGraph([.ab.makeDismissable(), .bb.with(style: .hold)])
+        let helm = try Helm(nav: graph)
+
+        helm.present(fragment: .b, id: 1)
+        helm.present(fragment: .b, id: 2)
+
+        XCTAssertEqual(helm.matchAll(.b), [1, 2])
+        XCTAssertEqual(helm.matchFirst(.a), Int?.none)
+    }
+
     func testDisconectedPresentedNodes() throws {
         let graph = TestGraph([.ab, .bc, .ce, .cd.with(style: .hold)])
         let helm = try Helm(nav: graph, path: [.ab, .bc, .cd])

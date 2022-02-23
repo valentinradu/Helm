@@ -6,8 +6,8 @@
 //
 
 import Foundation
-import SwiftUI
 import OrderedCollections
+import SwiftUI
 
 // Present-related methods
 public extension Helm {
@@ -15,8 +15,9 @@ public extension Helm {
     /// - seealso: `present(fragment:, id:)`
     func present(fragment: N) {
         do {
-            let segue = try presentableSegue(for: fragment)
-            try present(pathEdge: PathEdge(segue.edge))
+            let pathEdge = try presentablePathEdge(for: fragment,
+                                                   id: AnyHashable?.none)
+            try present(pathEdge: pathEdge)
         } catch {
             errors.append(error)
         }
@@ -30,8 +31,8 @@ public extension Helm {
     /// - parameter id: An optional id to distinguish between same fragments displaying different data.
     func present<ID>(fragment: N, id: ID? = nil) where ID: PathFragmentIdentifier {
         do {
-            let segue = try presentableSegue(for: fragment)
-            try present(pathEdge: PathEdge(segue.edge, id: id))
+            let pathEdge = try presentablePathEdge(for: fragment, id: id)
+            try present(pathEdge: pathEdge)
         } catch {
             errors.append(error)
         }
@@ -41,8 +42,9 @@ public extension Helm {
     /// - seealso: `present(tag:, id:)`
     func present<T>(tag: T) where T: SegueTag {
         do {
-            let segue = try presentableSegue(with: tag)
-            try present(pathEdge: PathEdge(segue.edge))
+            let pathEdge = try presentablePathEdge(with: tag,
+                                                   id: AnyHashable?.none)
+            try present(pathEdge: pathEdge)
         } catch {
             errors.append(error)
         }
@@ -55,8 +57,8 @@ public extension Helm {
     /// - parameter id: An optional id to distinguish between same fragments displaying different data.
     func present<T, ID>(tag: T, id: ID?) where ID: PathFragmentIdentifier, T: SegueTag {
         do {
-            let segue = try presentableSegue(with: tag)
-            try present(pathEdge: PathEdge(segue.edge, id: id))
+            let pathEdge = try presentablePathEdge(with: tag, id: id)
+            try present(pathEdge: pathEdge)
         } catch {
             errors.append(error)
         }
@@ -66,8 +68,8 @@ public extension Helm {
     /// - seealso: `forward(id:)`
     func forward() {
         do {
-            let segue = try presentableForwardSegue()
-            try present(pathEdge: PathEdge(segue.edge))
+            let pathEdge = try presentableForwardPathEdge(id: AnyHashable?.none)
+            try present(pathEdge: pathEdge)
         } catch {
             errors.append(error)
         }
@@ -79,8 +81,8 @@ public extension Helm {
     /// - parameter id: An optional id to distinguish between same fragments displaying different data.
     func forward<ID>(id: ID?) where ID: PathFragmentIdentifier {
         do {
-            let segue = try presentableForwardSegue()
-            try present(pathEdge: PathEdge(segue.edge, id: id))
+            let pathEdge = try presentableForwardPathEdge(id: id)
+            try present(pathEdge: pathEdge)
         } catch {
             errors.append(error)
         }
@@ -90,7 +92,8 @@ public extension Helm {
     /// - parameter fragment: The fragment
     func canPresent(fragment: N) -> Bool {
         do {
-            _ = try presentableSegue(for: fragment)
+            _ = try presentablePathEdge(for: fragment,
+                                        id: AnyHashable?.none)
             return true
         } catch {
             return false
@@ -101,7 +104,8 @@ public extension Helm {
     /// - parameter tag: The tag
     func canPresent<T>(using tag: T) -> Bool where T: SegueTag {
         do {
-            _ = try presentableSegue(with: tag)
+            _ = try presentablePathEdge(with: tag,
+                                        id: AnyHashable?.none)
             return true
         } catch {
             return false
@@ -114,11 +118,32 @@ public extension Helm {
         return isPresented(fragment, id: String?.none)
     }
 
-    /// Checks if a fragment is presented. Shorthand for `presentedFragments.contains(fragment)`
+    /// Checks if a fragment with a specific id is presented.
     /// - returns: True if the fragment is presented.
     func isPresented<ID>(_ fragment: N, id: ID?) -> Bool where ID: PathFragmentIdentifier {
         return presentedFragments
             .contains(PathFragment(fragment, id: id))
+    }
+
+    /// Matches all the ids of a specific fragment
+    /// - returns: The set of ids
+    func matchAll<ID>(_ fragment: N) -> Set<ID> where ID: PathFragmentIdentifier {
+        Set(presentedFragments
+            .filter { $0.wrappedValue == fragment }
+            .compactMap {
+                $0.id?.base as? ID
+            })
+    }
+
+    /// Matches the first presented id
+    /// - returns: The fragment id, if a match was found
+    /// - warning: If none or multiple (with different ids) fragments are presented this function returns nil
+    func matchFirst<ID>(_ fragment: N) -> ID? where ID: PathFragmentIdentifier {
+        let allIds: Set<ID> = matchAll(fragment)
+        guard allIds.count == 1 else {
+            return nil
+        }
+        return allIds.first!
     }
 
     /// A special `isPresented(fragment:)` function that takes multiple fragments and returns a binding with the one that's presented or nil otherwise.
@@ -176,69 +201,110 @@ extension Helm {
         path = OrderedSet(path.prefix(while: { pathEdge != $0 }))
         path.append(pathEdge)
 
-        if let autoSegue = autoPresentableSegue(from: pathEdge.to.wrappedValue) {
-            try present(pathEdge: PathEdge(autoSegue.edge))
+        if let pathEdge = try autoPresentablePathEdge(from: pathEdge.to.wrappedValue) {
+            try present(pathEdge: pathEdge)
         }
     }
 
-    func presentableSegue(for fragment: N) throws -> HelmSegue {
+    func presentablePathEdge<ID>(for fragment: N, id: ID? = nil) throws -> PathEdge<N> where ID: PathFragmentIdentifier {
         if path.isEmpty {
             do {
-                return try nav.inlets.uniqueIngressEdge(for: fragment)
+                let segue = try nav.inlets.uniqueIngressEdge(for: fragment)
+                return PathEdge(segue.edge,
+                                sourceId: nil,
+                                targetId: id)
             } catch {
                 throw ConcreteHelmError.missingSegueToFragment(fragment)
             }
         } else {
-            let segues = presentedFragments
+            let pathEdges = presentedFragments
                 .reversed()
-                .flatMap {
+                .flatMap { edge in
                     nav
-                        .egressEdges(for: $0.wrappedValue)
+                        .egressEdges(for: edge.wrappedValue)
                         .ingressEdges(for: fragment)
+                        .map {
+                            PathEdge($0.edge,
+                                     sourceId: edge.id,
+                                     targetId: id)
+                        }
                 }
 
-            guard let segue = segues.first else {
+            guard let pathEdge = pathEdges.first else {
                 throw ConcreteHelmError.missingSegueToFragment(fragment)
             }
 
-            return segue
+            return pathEdge
         }
     }
 
-    func presentableSegue<T>(with tag: T) throws -> HelmSegue where T: SegueTag {
-        let segues = presentedFragments
+    func presentablePathEdge<T, ID>(with tag: T, id: ID? = nil) throws -> PathEdge<N> where T: SegueTag, ID: PathFragmentIdentifier {
+        let pathEdges = presentedFragments
             .reversed()
-            .flatMap {
+            .flatMap { edge in
                 nav
-                    .egressEdges(for: $0.wrappedValue)
+                    .egressEdges(for: edge.wrappedValue)
                     .filter { $0.tag == AnyHashable(tag) }
+                    .map {
+                        PathEdge($0.edge,
+                                 sourceId: edge.id,
+                                 targetId: id)
+                    }
             }
 
-        guard let segue = segues.last else {
+        guard let pathEdge = pathEdges.last else {
             throw ConcreteHelmError.missingTaggedSegue(name: AnyHashable(tag))
         }
 
-        return segue
+        return pathEdge
     }
 
-    func presentableForwardSegue() throws -> HelmSegue {
+    func presentableForwardPathEdge<ID>(id: ID? = nil) throws -> PathEdge<N>
+        where ID: PathFragmentIdentifier
+    {
         let fragment = try presentedFragments.last.unwrap()
         do {
-            return try nav.uniqueEgressEdge(for: fragment.wrappedValue)
+            let segue = try nav.uniqueEgressEdge(for: fragment.wrappedValue)
+            return PathEdge(segue.edge,
+                            sourceId: fragment.id,
+                            targetId: id)
         } catch {
             throw ConcreteHelmError.ambiguousForwardFromFragment(fragment.wrappedValue)
         }
     }
 
-    func autoPresentableSegue(from: N) -> HelmSegue? {
-        guard let segue = nav
-            .egressEdges(for: from)
-            .first(where: { $0.auto })
-        else {
-            return nil
+    func autoPresentablePathEdge(from fragment: N) throws -> PathEdge<N>? {
+        if path.isEmpty {
+            return nav
+                .inlets
+                .egressEdges(for: fragment)
+                .filter { $0.auto }
+                .first
+                .map {
+                    PathEdge($0.edge,
+                             sourceId: AnyHashable?.none,
+                             targetId: AnyHashable?.none)
+                }
+        } else {
+            guard let pathEdge = presentedFragments
+                .reversed()
+                .compactMap({ edge in
+                    nav
+                        .egressEdges(for: edge.wrappedValue)
+                        .ingressEdges(for: fragment)
+                        .first(where: { $0.auto })
+                        .map {
+                            PathEdge($0.edge,
+                                     sourceId: edge.id,
+                                     targetId: nil)
+                        }
+                })
+                .last
+            else {
+                return nil
+            }
+            return pathEdge
         }
-
-        return segue
     }
 }
 

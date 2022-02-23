@@ -53,30 +53,30 @@ extension DirectedEdge where N == TestNode {
 }
 
 extension PathEdge where N == TestNode {
-    static var aa: Self { .init(.a => .a) }
-    static var ab: Self { .init(.a => .b) }
-    static var ac: Self { .init(.a => .c) }
-    static var ad: Self { .init(.a => .d) }
-    static var ba: Self { .init(.b => .a) }
-    static var bb: Self { .init(.b => .b) }
-    static var bc: Self { .init(.b => .c) }
-    static var bd: Self { .init(.b => .d) }
-    static var be: Self { .init(.b => .e) }
-    static var ca: Self { .init(.c => .a) }
-    static var cb: Self { .init(.c => .b) }
-    static var cc: Self { .init(.c => .c) }
-    static var cd: Self { .init(.c => .d) }
-    static var ce: Self { .init(.c => .e) }
-    static var ch: Self { .init(.c => .h) }
-    static var db: Self { .init(.d => .b) }
-    static var de: Self { .init(.d => .e) }
-    static var df: Self { .init(.d => .f) }
-    static var dg: Self { .init(.d => .g) }
-    static var dh: Self { .init(.d => .h) }
-    static var eb: Self { .init(.e => .b) }
-    static var hf: Self { .init(.h => .f) }
-    static var hj: Self { .init(.h => .j) }
-    static var jg: Self { .init(.j => .g) }
+    static var aa: Self { .init(.a => .a, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var ab: Self { .init(.a => .b, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var ac: Self { .init(.a => .c, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var ad: Self { .init(.a => .d, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var ba: Self { .init(.b => .a, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var bb: Self { .init(.b => .b, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var bc: Self { .init(.b => .c, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var bd: Self { .init(.b => .d, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var be: Self { .init(.b => .e, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var ca: Self { .init(.c => .a, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var cb: Self { .init(.c => .b, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var cc: Self { .init(.c => .c, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var cd: Self { .init(.c => .d, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var ce: Self { .init(.c => .e, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var ch: Self { .init(.c => .h, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var db: Self { .init(.d => .b, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var de: Self { .init(.d => .e, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var df: Self { .init(.d => .f, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var dg: Self { .init(.d => .g, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var dh: Self { .init(.d => .h, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var eb: Self { .init(.e => .b, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var hf: Self { .init(.h => .f, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var hj: Self { .init(.h => .j, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
+    static var jg: Self { .init(.j => .g, sourceId: AnyHashable?.none, targetId: AnyHashable?.none) }
 }
 
 extension Segue where N == TestNode {

@@ -16,6 +16,23 @@ public enum PathTransition<N: Fragment>: Hashable {
     case replace(path: OrderedSet<PathEdge<N>>)
 }
 
+extension PathTransition: CustomDebugStringConvertible, CustomStringConvertible {
+    public var debugDescription: String {
+        switch self {
+        case let .present(pathEdge):
+            return ".present(\(pathEdge.debugDescription))"
+        case let .dismiss(pathEdge):
+            return ".dismiss(\(pathEdge.debugDescription))"
+        case let .replace(pathEdges):
+            return ".replace(\(pathEdges.map { $0.debugDescription }.joined(separator: ",")))"
+        }
+    }
+
+    public var description: String {
+        return debugDescription
+    }
+}
+
 /// A fragment identifier used to distinguish fragments that have the same name, but display different data (i.e. a master detail list)
 public protocol PathFragmentIdentifier: Hashable {}
 
@@ -30,18 +47,14 @@ public struct PathEdge<N: Fragment>: Hashable, DirectedConnector {
     /// The output fragment
     public let to: PathFragment<N>
 
-    /// Init using a regular edge.
-    public init(_ edge: DirectedEdge<N>) {
-        from = PathFragment(edge.from)
-        to = PathFragment(edge.to)
-    }
-
-    /// Init using a regular edge and the destination fragment id.
-    public init<ID>(_ edge: DirectedEdge<N>, id: ID? = nil)
+    /// Init using a regular edge and the source/target ids.
+    public init<ID>(_ edge: DirectedEdge<N>,
+                    sourceId: ID?,
+                    targetId: ID?)
         where ID: PathFragmentIdentifier
     {
-        from = PathFragment(edge.from)
-        to = PathFragment(edge.to, id: id)
+        from = PathFragment(edge.from, id: sourceId)
+        to = PathFragment(edge.to, id: targetId)
     }
 
     /// Turns the path edge into a regular edge.
@@ -53,7 +66,19 @@ public struct PathEdge<N: Fragment>: Hashable, DirectedConnector {
     /// Returns the inverted path edge
     public var inverted: Self {
         PathEdge(.init(from: to.wrappedValue,
-                       to: from.wrappedValue))
+                       to: from.wrappedValue),
+                 sourceId: from.id,
+                 targetId: to.id)
+    }
+}
+
+extension PathEdge: CustomStringConvertible, CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "\(from)->\(to)"
+    }
+
+    public var description: String {
+        return debugDescription
     }
 }
 
@@ -78,6 +103,16 @@ public struct PathFragment<N: Fragment>: Fragment {
 
     public static func < (lhs: PathFragment<N>, rhs: PathFragment<N>) -> Bool {
         lhs.wrappedValue < rhs.wrappedValue
+    }
+}
+
+extension PathFragment: CustomStringConvertible, CustomDebugStringConvertible {
+    public var debugDescription: String {
+        "(\(wrappedValue), \(String(describing: id)))"
+    }
+
+    public var description: String {
+        return debugDescription
     }
 }
 
@@ -130,8 +165,8 @@ public class Helm<N: Fragment>: ObservableObject {
 
         presentedFragments = calculatePresentedFragments()
 
-        if let autoSegue = autoPresentableSegue(from: entry) {
-            try present(pathEdge: PathEdge(autoSegue.edge))
+        if let autoPathEdge = try autoPresentablePathEdge(from: entry) {
+            try present(pathEdge: autoPathEdge)
         }
     }
 }

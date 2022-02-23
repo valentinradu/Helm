@@ -148,7 +148,7 @@ class GraphTests: XCTestCase {
         XCTAssertEqual(edges, [
             .aa, .ab, .ac,
             .ba, .bb, .bc,
-            .ca, .cb, .cc
+            .ca, .cb, .cc,
         ])
     }
 

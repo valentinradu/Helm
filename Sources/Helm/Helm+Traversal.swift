@@ -40,7 +40,7 @@ extension Helm {
                     break
                 }
                 visited.append(nextEdge)
-                
+
                 guard let segue = try? segue(for: nextEdge.edge) else {
                     break
                 }
@@ -49,8 +49,7 @@ extension Helm {
                     result.removeLast()
                 }
                 result.append(nextEdge.to)
-            }
-            else {
+            } else {
                 break
             }
         }

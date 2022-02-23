@@ -11,7 +11,7 @@
 
 </div>
 
-Helm is a declarative, graph-based routing library for SwiftUI. It fully describes all the navigation flows and can handle complex overlapping UI, modals, deeplinking, and much more.
+Helm is a declarative, graph-based routing library for SwiftUI. It fully describes all the navigation flows in an app and can handle complex overlapping UI, modals, deeplinking, and much more.
 
 ## Index
 * [Concepts](#concepts)
@@ -25,7 +25,7 @@ Helm is a declarative, graph-based routing library for SwiftUI. It fully describ
 
 ## Features
 
-- lightweight, ~1K lines of code
+- lightweight, less than 2K lines of code
 - declarative
 - deeplinking-ready, it takes a single call to navigate anywhere
 - snapshot testing ready, iterate through all screens, capture and compare them  
