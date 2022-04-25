@@ -118,7 +118,7 @@ extension PathFragment: CustomStringConvertible, CustomDebugStringConvertible {
 
 /// Helm holds the navigation rules plus the presented path.
 /// Has methods to navigate and list all possible transitions.
-public class Helm<N: Fragment>: ObservableObject {
+public final class Helm<N: Fragment>: ObservableObject {
     public typealias HelmSegue = Segue<N>
     public typealias HelmGraph = Set<HelmSegue>
     public typealias HelmGraphEdge = DirectedEdge<N>
