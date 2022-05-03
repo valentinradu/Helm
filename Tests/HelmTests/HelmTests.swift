@@ -57,6 +57,17 @@ class HelmTests: XCTestCase {
 
         XCTAssertTrue(helm.isPresented(.b))
     }
+    
+    func testAuto() throws {
+        let graph = TestGraph([.ab, .bc.makeAuto()])
+        let helm = try Helm(nav: graph)
+        
+        helm.present(fragment: .b)
+        
+        print(helm.presentedFragments)
+        
+        XCTAssertTrue(helm.isPresented(.c))
+    }
 
     func testCyclicPath() throws {
         let graph = TestGraph([.ab, .bc, .cb])

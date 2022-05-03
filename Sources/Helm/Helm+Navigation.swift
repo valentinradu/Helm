@@ -276,7 +276,6 @@ extension Helm {
     func autoPresentablePathEdge(from fragment: N) throws -> PathEdge<N>? {
         if path.isEmpty {
             return nav
-                .inlets
                 .egressEdges(for: fragment)
                 .filter { $0.auto }
                 .first
@@ -290,8 +289,7 @@ extension Helm {
                 .reversed()
                 .compactMap({ edge in
                     nav
-                        .egressEdges(for: edge.wrappedValue)
-                        .ingressEdges(for: fragment)
+                        .egressEdges(for: fragment)
                         .first(where: { $0.auto })
                         .map {
                             PathEdge($0.edge,
