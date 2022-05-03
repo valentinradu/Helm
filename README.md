@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="helm.svg" />
-</p>
-
-<div align="center">
+# Helm
 
 [![SwiftUI](https://img.shields.io/badge/SwiftUI-blue.svg?style=for-the-badge&logo=swift&logoColor=black)](https://developer.apple.com/xcode/swiftui)
 [![Swift](https://img.shields.io/badge/Swift-5.3-orange.svg?style=for-the-badge&logo=swift)](https://swift.org)
